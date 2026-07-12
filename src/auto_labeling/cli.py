@@ -9,7 +9,6 @@ from .fetcher import fetch_snapshot
 from .jsonl import append_jsonl, read_jsonl, utc_now, write_jsonl
 from .queries import read_queries
 from .review import make_review_batch
-from .review_server import run_review_server
 from .serper import SERPER_PAGE_SIZE, dedupe_serp_rows, serper_page
 from .teacher import label_snapshot
 from .train import evaluate_model, train_model
@@ -174,10 +173,6 @@ def cmd_make_review_batch(args: argparse.Namespace) -> None:
     print(f"Wrote review batch {path}")
 
 
-def cmd_review_server(args: argparse.Namespace) -> None:
-    run_review_server(args.batch, args.out, host=args.host, port=args.port)
-
-
 def cmd_train(args: argparse.Namespace) -> None:
     report = train_model(args.labels, args.out, metrics_path=args.metrics)
     print(f"Trained {args.out}")
@@ -243,13 +238,6 @@ def build_parser() -> argparse.ArgumentParser:
     batch.add_argument("--reviewed", type=Path, default=DATA / "labels.reviewed.jsonl")
     batch.add_argument("--batch-size", type=int, default=500)
     batch.set_defaults(func=cmd_make_review_batch)
-
-    review = sub.add_parser("review-server")
-    review.add_argument("--batch", type=Path, required=True)
-    review.add_argument("--out", type=Path, default=DATA / "labels.reviewed.jsonl")
-    review.add_argument("--host", default="127.0.0.1")
-    review.add_argument("--port", type=int, default=8020)
-    review.set_defaults(func=cmd_review_server)
 
     train = sub.add_parser("train")
     train.add_argument("--labels", type=Path, default=DATA / "labels.reviewed.jsonl")

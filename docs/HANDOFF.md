@@ -158,9 +158,7 @@ python -m auto_labeling.cli search --resume --limit-queries 300
 python -m auto_labeling.cli fetch  --resume --limit 1500  # parallel, --workers (Default 8)
 python -m auto_labeling.cli label  --resume --limit 1500
 python -m auto_labeling.cli make-review-batch --batch-size 150
-python -m auto_labeling.cli review-server --batch data/review_batches/batch-0004.jsonl
-# Review-UI: http://127.0.0.1:8020 — Batch ist beim Serverstart fixiert,
-# keine Auswahl in der UI.
+# Review batches are loaded through the Teacher review mode in Labeling Lab.
 python -m auto_labeling.cli train
 python -m auto_labeling.cli evaluate
 ```
