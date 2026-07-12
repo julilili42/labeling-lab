@@ -199,6 +199,18 @@ def cmd_apply_reviews(args: argparse.Namespace) -> None:
         if row.get("text_hash") and str(row.get("label") or "") in {"positive", "negative", "gray"}
     }
     rows = list(read_jsonl(args.labels))
+    snapshots = {str(row.get("text_hash") or ""): row for row in read_jsonl(args.snapshots)}
+    holdout_hashes = {str(row.get("text_hash") or "") for row in read_jsonl(args.holdout)}
+    known_hashes = {str(row.get("text_hash") or "") for row in rows}
+    added = 0
+    for row in read_jsonl(args.teacher):
+        text_hash = str(row.get("text_hash") or "")
+        snapshot = snapshots.get(text_hash)
+        if not text_hash or text_hash in known_hashes or text_hash in holdout_hashes or not snapshot:
+            continue
+        rows.append({**row, "text": snapshot.get("text") or ""})
+        known_hashes.add(text_hash)
+        added += 1
     changed = 0
     for row in rows:
         review = reviewed.get(str(row.get("text_hash") or ""))
@@ -209,7 +221,7 @@ def cmd_apply_reviews(args: argparse.Namespace) -> None:
             row["review_source"] = review.get("review_source")
             changed += 1
     write_jsonl(args.labels, rows)
-    print(f"Applied {changed} reviewed labels to {args.labels}")
+    print(f"Added {added} teacher labels and applied {changed} reviews to {args.labels}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -280,6 +292,9 @@ def build_parser() -> argparse.ArgumentParser:
     apply_reviews = sub.add_parser("apply-reviews")
     apply_reviews.add_argument("--labels", type=Path, default=DATA / "labels.final.jsonl")
     apply_reviews.add_argument("--reviewed", type=Path, default=DATA / "labels.reviewed.jsonl")
+    apply_reviews.add_argument("--teacher", type=Path, default=DATA / "teacher_labels.raw.jsonl")
+    apply_reviews.add_argument("--snapshots", type=Path, default=DATA / "page_snapshots.jsonl")
+    apply_reviews.add_argument("--holdout", type=Path, default=DATA / "eval_holdout.jsonl")
     apply_reviews.set_defaults(func=cmd_apply_reviews)
 
     return parser

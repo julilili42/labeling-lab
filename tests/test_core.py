@@ -92,7 +92,15 @@ class CoreTests(unittest.TestCase):
             reviewed = root / "reviewed.jsonl"
             write_jsonl(labels, [{"text_hash": "one", "label": "positive"}])
             write_jsonl(reviewed, [{"text_hash": "one", "label": "negative", "rating": 1}])
-            cmd_apply_reviews(type("Args", (), {"labels": labels, "reviewed": reviewed})())
+            empty = root / "empty.jsonl"
+            write_jsonl(empty, [])
+            cmd_apply_reviews(
+                type(
+                    "Args",
+                    (),
+                    {"labels": labels, "reviewed": reviewed, "teacher": empty, "snapshots": empty, "holdout": empty},
+                )()
+            )
             self.assertEqual(list(read_jsonl(labels))[0]["label"], "negative")
 
 
