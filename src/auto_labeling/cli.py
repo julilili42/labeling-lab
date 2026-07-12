@@ -192,6 +192,26 @@ def cmd_train_link(args: argparse.Namespace) -> None:
     train_link_model(argv)
 
 
+def cmd_apply_reviews(args: argparse.Namespace) -> None:
+    reviewed = {
+        str(row.get("text_hash") or ""): row
+        for row in read_jsonl(args.reviewed)
+        if row.get("text_hash") and str(row.get("label") or "") in {"positive", "negative", "gray"}
+    }
+    rows = list(read_jsonl(args.labels))
+    changed = 0
+    for row in rows:
+        review = reviewed.get(str(row.get("text_hash") or ""))
+        if review and row.get("label") != review.get("label"):
+            row["label"] = review["label"]
+            row["rating"] = review.get("rating")
+            row["reviewed_at"] = review.get("reviewed_at")
+            row["review_source"] = review.get("review_source")
+            changed += 1
+    write_jsonl(args.labels, rows)
+    print(f"Applied {changed} reviewed labels to {args.labels}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="auto-label")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -256,6 +276,11 @@ def build_parser() -> argparse.ArgumentParser:
     train_link.add_argument("--out", type=Path, default=DATA / "models")
     train_link.add_argument("--crawl-db", type=Path)
     train_link.set_defaults(func=cmd_train_link)
+
+    apply_reviews = sub.add_parser("apply-reviews")
+    apply_reviews.add_argument("--labels", type=Path, default=DATA / "labels.final.jsonl")
+    apply_reviews.add_argument("--reviewed", type=Path, default=DATA / "labels.reviewed.jsonl")
+    apply_reviews.set_defaults(func=cmd_apply_reviews)
 
     return parser
 

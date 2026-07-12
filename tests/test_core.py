@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 from auto_labeling.fetcher import parse_html
-from auto_labeling.cli import query_progress
+from auto_labeling.cli import cmd_apply_reviews, query_progress
 from auto_labeling.jsonl import read_jsonl, write_jsonl
 from auto_labeling.queries import parse_query_line
 from auto_labeling.teacher import postprocess_label
@@ -84,6 +84,16 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(report["examples"], 20)
             import joblib
             self.assertIn("text", joblib.load(root / "model.joblib")["feature_fields"])
+
+    def test_apply_reviews_updates_matching_final_label(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            labels = root / "labels.jsonl"
+            reviewed = root / "reviewed.jsonl"
+            write_jsonl(labels, [{"text_hash": "one", "label": "positive"}])
+            write_jsonl(reviewed, [{"text_hash": "one", "label": "negative", "rating": 1}])
+            cmd_apply_reviews(type("Args", (), {"labels": labels, "reviewed": reviewed})())
+            self.assertEqual(list(read_jsonl(labels))[0]["label"], "negative")
 
 
 if __name__ == "__main__":

@@ -200,7 +200,7 @@ class LabelStats(BaseModel):
 
 
 class PipelineRequest(BaseModel):
-    action: Literal["search", "fetch", "label", "train-page", "train-link"]
+    action: Literal["search", "fetch", "label", "apply-reviews", "train-page", "train-link"]
     limit: int | None = Field(default=None, ge=1, le=10000)
     workers: int | None = Field(default=None, ge=1, le=32)
     model: str | None = None
@@ -251,6 +251,8 @@ def _pipeline_command(payload: PipelineRequest) -> list[str]:
                 command += ["--workers", str(payload.workers)]
             if payload.model:
                 command += ["--model", payload.model]
+        case "apply-reviews":
+            command += ["apply-reviews"]
         case "train-page":
             command += [
                 "train",
