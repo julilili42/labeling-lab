@@ -7,7 +7,7 @@ from auto_labeling.cli import query_progress
 from auto_labeling.jsonl import read_jsonl, write_jsonl
 from auto_labeling.queries import parse_query_line
 from auto_labeling.teacher import postprocess_label
-from auto_labeling.train import make_text
+from auto_labeling.train import make_text, train_model
 from auto_labeling.urls import normalize_url
 
 
@@ -70,6 +70,20 @@ class CoreTests(unittest.TestCase):
         self.assertIn("url: https://example.com/x", text)
         self.assertIn("display_url: example.com/x", text)
         self.assertIn("snippet: B", text)
+
+    def test_page_model_bundle_records_text_feature(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            labels = root / "labels.jsonl"
+            rows = [
+                {"label": "positive" if index % 2 else "negative", "title": f"Page {index}", "url": f"https://example.test/{index}", "text": "Tuebingen guide" if index % 2 else "unrelated page"}
+                for index in range(20)
+            ]
+            write_jsonl(labels, rows)
+            report = train_model(labels, root / "model.joblib", metrics_path=root / "metrics.json")
+            self.assertEqual(report["examples"], 20)
+            import joblib
+            self.assertIn("text", joblib.load(root / "model.joblib")["feature_fields"])
 
 
 if __name__ == "__main__":

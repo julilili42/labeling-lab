@@ -131,7 +131,7 @@ def train_model(labels_path: Path, out_path: Path, *, metrics_path: Path) -> dic
     sk["joblib"].dump(
         {
             "model": final_model,
-            "feature_fields": ["title", "url", "display_url", "snippet"],
+            "feature_fields": ["title", "url", "display_url", "snippet", "text"],
             "labels": ["negative", "positive"],
             "ignored_rating": 3,
             "training_examples": len(examples),
