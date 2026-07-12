@@ -2,6 +2,8 @@ import json
 import sqlite3
 
 from labeling_lab.server import (
+    PipelineRequest,
+    _pipeline_command,
     init_schema,
     link_candidates,
     read_crawler_candidates,
@@ -144,3 +146,16 @@ def test_teacher_review_item_uses_snapshot_text_when_no_snippet():
     assert item["snippet"] == "Visible page text"
     assert item["source"] == "teacher_review"
     assert item["rating"] is None
+
+
+def test_page_training_ui_uses_the_release_dataset():
+    command = _pipeline_command(PipelineRequest(action="train-page"))
+
+    assert command[-6:] == [
+        "--labels",
+        "data/labels.final.jsonl",
+        "--out",
+        "data/models/page_verdict.joblib",
+        "--metrics",
+        "data/models/page_metrics.json",
+    ]

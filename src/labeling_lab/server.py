@@ -252,7 +252,15 @@ def _pipeline_command(payload: PipelineRequest) -> list[str]:
             if payload.model:
                 command += ["--model", payload.model]
         case "train-page":
-            command += ["train"]
+            command += [
+                "train",
+                "--labels",
+                "data/labels.final.jsonl",
+                "--out",
+                "data/models/page_verdict.joblib",
+                "--metrics",
+                "data/models/page_metrics.json",
+            ]
         case "train-link":
             command += ["train-link"]
             if payload.crawl_db:
