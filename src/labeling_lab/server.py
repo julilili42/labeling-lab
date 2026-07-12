@@ -20,6 +20,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from auto_labeling.jsonl import append_jsonl, utc_now
+
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = ROOT_DIR / "static"
@@ -178,6 +180,16 @@ class LinkImportResponse(BaseModel):
     rows_read: int
     stored: int
     results: list[LinkResult]
+
+
+class ReviewImportRequest(BaseModel):
+    path: str
+
+
+class ReviewRatingRequest(BaseModel):
+    item: dict[str, object]
+    rating: int = Field(ge=1, le=5)
+    notes: str = ""
 
 
 class LabelStats(BaseModel):
@@ -714,6 +726,18 @@ def read_link_candidates(path: Path) -> list[dict[str, object]]:
         if result is not None:
             results.append(result)
     return results
+
+
+def review_item(row: dict[str, object]) -> dict[str, object]:
+    return {
+        **row,
+        "title": str(row.get("title") or ""),
+        "url": str(row.get("url") or ""),
+        "display_url": str(row.get("display_url") or row.get("url") or ""),
+        "snippet": str(row.get("snippet") or row.get("text") or ""),
+        "source": "teacher_review",
+        "rating": None,
+    }
 
 
 def upsert_crawler_results(
@@ -1411,6 +1435,18 @@ def get_link_candidates(
         return link_candidates(con, limit=limit, unlabeled_only=unlabeled_only)
 
 
+@app.post("/api/import/review-batch")
+def import_review_batch(payload: ReviewImportRequest) -> dict[str, object]:
+    path = resolve_import_path(payload.path)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"review_batch_not_found: {path}")
+    try:
+        items = [review_item(row) for row in read_records(path)]
+    except (ValueError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=400, detail=f"invalid_review_batch: {exc}") from exc
+    return {"path": str(path), "rows_read": len(items), "results": items}
+
+
 @app.post("/api/rating", response_model=ActionResponse)
 def rate(payload: RatingRequest) -> ActionResponse:
     label = label_from_rating(payload.rating)
@@ -1480,6 +1516,23 @@ def rate_link(payload: LinkRatingRequest) -> ActionResponse:
                     payload.link_id,
                 ),
             )
+    return ActionResponse()
+
+
+@app.post("/api/review-rating", response_model=ActionResponse)
+def rate_review_item(payload: ReviewRatingRequest) -> ActionResponse:
+    item = dict(payload.item)
+    item.update(
+        {
+            "teacher_label": item.get("label"),
+            "label": label_from_rating(payload.rating),
+            "rating": payload.rating,
+            "review_notes": payload.notes,
+            "reviewed_at": utc_now(),
+            "review_source": "labeling_lab_ui",
+        }
+    )
+    append_jsonl(ROOT_DIR / "data" / "labels.reviewed.jsonl", item)
     return ActionResponse()
 
 

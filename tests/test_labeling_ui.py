@@ -6,6 +6,7 @@ from labeling_lab.server import (
     link_candidates,
     read_crawler_candidates,
     read_link_candidates,
+    review_item,
     upsert_link_results,
 )
 
@@ -127,3 +128,19 @@ def test_reads_link_candidates_from_jsonl(tmp_path):
     assert result["source"] == "crawler_linkverdict"
     assert result["target_status"] == "page"
     assert result["target_pageverdict_score"] == 0.88
+
+
+def test_teacher_review_item_uses_snapshot_text_when_no_snippet():
+    item = review_item(
+        {
+            "title": "Visit",
+            "url": "https://example.test/visit",
+            "text": "Visible page text",
+            "label": "positive",
+            "teacher": "ollama",
+        }
+    )
+
+    assert item["snippet"] == "Visible page text"
+    assert item["source"] == "teacher_review"
+    assert item["rating"] is None

@@ -43,6 +43,7 @@ const linkRatings = [
 const defaultPaths = {
   pages: "data/pageverdict_candidates.jsonl",
   links: "data/link_candidates.jsonl",
+  teacher: "data/review_batches/batch-0001.jsonl",
 }
 
 function escapeHtml(value) {
@@ -240,7 +241,7 @@ function renderLinkCurrent(result) {
       <div class="secondary-actions">
         <button data-action="prev" type="button">Prev</button>
         <button data-action="next" type="button">Next</button>
-        <button data-action="undo" type="button">Undo</button>
+        ${state.mode === "teacher" ? "" : '<button data-action="undo" type="button">Undo</button>'}
       </div>
     </article>
   `
@@ -272,10 +273,12 @@ function renderCurrent() {
         </div>
         <div class="url">${escapeHtml(displayUrl)}</div>
         <div class="meta">
-          <span class="pill">query ${escapeHtml(result.query)}</span>
-          <span class="pill">page ${escapeHtml(result.page_number)}</span>
-          <span class="pill">rank ${escapeHtml(result.rank)}</span>
+          ${result.query ? `<span class="pill">query ${escapeHtml(result.query)}</span>` : ""}
+          ${result.page_number ? `<span class="pill">page ${escapeHtml(result.page_number)}</span>` : ""}
+          ${result.rank ? `<span class="pill">rank ${escapeHtml(result.rank)}</span>` : ""}
           <span class="pill">${escapeHtml(result.source)}</span>
+          ${result.teacher ? `<span class="pill">teacher ${escapeHtml(result.teacher)}</span>` : ""}
+          ${result.model ? `<span class="pill">${escapeHtml(result.model)}</span>` : ""}
           ${crawlerMeta(result)}
         </div>
       </div>
@@ -287,7 +290,7 @@ function renderCurrent() {
       <div class="secondary-actions">
         <button data-action="prev" type="button">Prev</button>
         <button data-action="next" type="button">Next</button>
-        <button data-action="undo" type="button">Undo</button>
+        ${state.mode === "teacher" ? "" : '<button data-action="undo" type="button">Undo</button>'}
       </div>
     </article>
   `
@@ -333,7 +336,7 @@ function crawlerUnlabeledOnly() {
 }
 
 function currentMode() {
-  return candidateModeInput.value === "links" ? "links" : "pages"
+  return candidateModeInput.value
 }
 
 function syncMode() {
@@ -348,7 +351,11 @@ async function importCrawlerCandidates() {
   syncMode()
   const mode = currentMode()
   const path = crawlerCsvPathInput.value.trim() || defaultPaths[mode]
-  const endpoint = mode === "links" ? "/api/import/link-candidates" : "/api/import/crawler-pageverdict"
+  const endpoint = mode === "links"
+    ? "/api/import/link-candidates"
+    : mode === "teacher"
+      ? "/api/import/review-batch"
+      : "/api/import/crawler-pageverdict"
   importCrawlerButton.disabled = true
   loadCrawlerButton.disabled = true
   setStatus("Importing candidate JSONL...")
@@ -358,7 +365,7 @@ async function importCrawlerCandidates() {
     const payload = await fetchJson(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: JSON.stringify(mode === "teacher" ? { path } : {
         path,
         limit: crawlerLimit(),
         unlabeled_only: crawlerUnlabeledOnly(),
@@ -383,6 +390,10 @@ async function importCrawlerCandidates() {
 async function loadCrawlerCandidates() {
   syncMode()
   const mode = currentMode()
+  if (mode === "teacher") {
+    setStatus("Choose a teacher-review batch and click Import.")
+    return
+  }
   const endpoint = mode === "links" ? "/api/link-candidates" : "/api/crawler-candidates"
   loadCrawlerButton.disabled = true
   setStatus("Loading candidates by lowest confidence...")
@@ -416,9 +427,11 @@ function move(delta) {
 }
 
 async function persistRating(result, rating, notes = "") {
-  const endpoint = state.mode === "links" ? "/api/link-rating" : "/api/rating"
+  const endpoint = state.mode === "links" ? "/api/link-rating" : state.mode === "teacher" ? "/api/review-rating" : "/api/rating"
   const body = state.mode === "links"
     ? { link_id: result.id, rating, notes }
+    : state.mode === "teacher"
+      ? { item: result, rating, notes }
     : { result_id: result.id, rating, notes }
   await fetchJson(endpoint, {
     method: "POST",

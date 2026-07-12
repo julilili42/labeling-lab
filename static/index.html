@@ -51,11 +51,12 @@
       </section>
 
       <section class="search-panel">
-        <label class="query-label" for="crawler-csv-path">Candidate JSONL</label>
+        <label class="query-label" for="crawler-csv-path">Input JSONL</label>
         <div class="search-row">
           <select id="candidate-mode">
             <option value="pages">Pages</option>
             <option value="links" selected>Links</option>
+            <option value="teacher">Teacher review</option>
           </select>
           <input id="crawler-csv-path" value="data/link_candidates.jsonl" />
           <input id="crawler-limit" class="small-input" type="number" min="1" max="2000" value="200" />
