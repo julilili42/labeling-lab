@@ -1,0 +1,195 @@
+# Core positives
+Tuebingen tourism | 20
+Tuebingen attractions | 20
+Tuebingen events English | 20
+Tuebingen student life | 20
+Tuebingen accommodation | 20
+Tuebingen transport | 20
+Tuebingen restaurants English | 20
+Tuebingen museums English | 20
+University of Tuebingen overview | 20
+University of Tuebingen admissions | 20
+Tuebingen hospital English | 20
+Tuebingen jobs English | 20
+Tuebingen city guide English | 20
+Visit Tuebingen Germany | 20
+Things to do in Tuebingen | 20
+Tuebingen old town English | 20
+Tuebingen walking tour English | 20
+Tuebingen Stocherkahn English | 20
+Tuebingen hotels English | 20
+Tuebingen public transport English | 20
+Tuebingen international students | 20
+University of Tuebingen international office | 20
+University of Tuebingen study programs English | 20
+University of Tuebingen exchange students | 20
+University Hospital Tuebingen international patients | 20
+Tuebingen weather English | 20
+Tuebingen news English | 20
+Tuebingen Wikipedia English | 20
+Tuebingen Reddit English | 20
+Tuebingen TripAdvisor | 20
+Tuebingen nightlife English | 20
+Tuebingen cafes English | 20
+Tuebingen shopping English | 20
+Tuebingen Christmas market English | 20
+Tuebingen chocolART festival | 20
+Hohentuebingen castle English | 20
+Tuebingen Neckar river punting | 20
+Tuebingen botanical garden English | 20
+Tuebingen expat guide | 20
+Living in Tuebingen English | 20
+Moving to Tuebingen Germany | 20
+Tuebingen day trip English | 20
+Tuebingen hiking trails English | 20
+Tuebingen bike rental English | 20
+Tuebingen train station English | 20
+German language courses Tuebingen | 20
+Tuebingen international school | 20
+Studying in Tuebingen experience | 20
+Tuebingen student dormitory English | 20
+Tuebingen Erasmus experience | 20
+Tuebingen travel blog | 20
+Tuebingen market square English | 20
+Tuebingen university library English | 20
+Tuebingen medicine study English | 20
+Tuebingen registration Anmeldung English | 20
+Tuebingen health insurance students English | 20
+Tuebingen vegan restaurants English | 20
+Bebenhausen monastery Tuebingen English | 20
+Wurmlinger Kapelle Tuebingen English | 20
+Hoelderlin tower Tuebingen English | 20
+Stiftskirche Tuebingen English | 20
+Tuebingen Platanenallee Neckar island | 20
+Schoenbuch nature park English | 20
+Tuebingen photography spots | 20
+Tuebingen best time to visit | 20
+Tuebingen hostel backpacker | 20
+Tuebingen camping English | 20
+Tuebingen swimming pool Freibad English | 20
+Tuebingen gym fitness English | 20
+Tuebingen running routes | 20
+Tuebingen umbrella market Umbrisch English | 20
+Tuebingen wine tasting English | 20
+Tuebingen brewery beer garden English | 20
+Tuebingen Swabian food English | 20
+Tuebingen weekly market English | 20
+Tuebingen flea market English | 20
+Tuebingen cinema English movies | 20
+Tuebingen theater English | 20
+Tuebingen live music concerts English | 20
+Tuebingen English speaking doctor | 20
+Tuebingen dentist English | 20
+Tuebingen residence permit visa English | 20
+Tuebingen relocation guide | 20
+Tuebingen startup jobs English | 20
+CureVac Tuebingen company | 20
+Cyber Valley Tuebingen startups | 20
+Tuebingen tech companies English | 20
+Tuebingen language exchange meetup | 20
+Tuebingen international community events | 20
+Tuebingen church service English | 20
+Tuebingen basketball Tigers English | 20
+Tuebingen football club English | 20
+Tuebingen rowing Neckar English | 20
+Tuebingen taxi rideshare English | 20
+Tuebingen naldo bus ticket English | 20
+Stuttgart airport to Tuebingen English | 20
+Tuebingen digital nomad | 20
+Tuebingen winter activities English | 20
+Tuebingen summer festival English | 20
+Tuebingen guided tour booking English | 20
+
+# Research drift traps
+Tuebingen research group | 20
+Tuebingen publications | 20
+Tuebingen lab | 20
+Tuebingen clinical trial | 20
+Tuebingen AI research institute | 20
+University of Tuebingen research English | 20
+Max Planck Tuebingen research | 20
+Cyber Valley Tuebingen research | 20
+University of Tuebingen professor research | 20
+Tuebingen neuroscience lab | 20
+Tuebingen machine learning lab | 20
+Tuebingen PhD position research | 20
+Tuebingen dissertation | 20
+Tuebingen journal article | 20
+Tuebingen PubMed | 20
+Max Planck Tuebingen publications | 20
+Hertie Institute Tuebingen research | 20
+DZNE Tuebingen research | 20
+Tuebingen SFB research | 20
+Tuebingen cluster of excellence research | 20
+Tuebingen bioinformatics group | 20
+Tuebingen quantum physics research | 20
+Tuebingen cognitive science research | 20
+Tuebingen medical faculty research | 20
+Tuebingen conference workshop proceedings | 20
+Tuebingen postdoc position | 20
+Tuebingen research seminar schedule | 20
+Tuebingen preprint arxiv | 20
+Tuebingen genetics institute | 20
+Tuebingen archaeology research | 20
+Tuebingen AI center research | 20
+ELLIS institute Tuebingen | 20
+NMI Tuebingen institute | 20
+Friedrich Miescher Laboratory Tuebingen | 20
+Tuebingen chemistry department research | 20
+Tuebingen physics colloquium | 20
+Tuebingen mathematics institute | 20
+Tuebingen theology faculty research | 20
+Tuebingen egyptology institute | 20
+Tuebingen law faculty research | 20
+Tuebingen clinical studies participate | 20
+Tuebingen research funding grants | 20
+Tuebingen summer school academic | 20
+Tuebingen graduate school application | 20
+
+# Non-English and nearby negatives
+Tuebingen Veranstaltungen | 20
+Tuebingen Stadtverwaltung | 20
+Reutlingen tourism English | 20
+Heidelberg university research group | 20
+Freiburg tourism English | 20
+Germany university research group | 20
+Tübingen Sehenswürdigkeiten | 20
+Tübingen Tourismus | 20
+Tübingen Rathaus | 20
+Tübingen Bürgeramt | 20
+Tübingen Wohnung mieten | 20
+Tübingen Jobs Deutsch | 20
+Tübingen Krankenhaus Deutsch | 20
+Universität Tübingen Forschung | 20
+Reutlingen events English | 20
+Stuttgart tourism English | 20
+Rottenburg am Neckar tourism English | 20
+Esslingen tourism English | 20
+Baden Württemberg tourism English | 20
+Germany student accommodation | 20
+Heidelberg tourism English | 20
+Heidelberg University admissions | 20
+Ulm tourism English | 20
+Freiburg events English | 20
+Tübingen Stadtbücherei | 20
+Tübingen Fahrplan Bus | 20
+Tübingen Restaurants Deutsch | 20
+Tübingen Immobilien kaufen | 20
+Tübingen Kita Anmeldung | 20
+Universität Tübingen Vorlesungsverzeichnis | 20
+Konstanz tourism English | 20
+Karlsruhe tourism English | 20
+Schwäbisches Tagblatt Tübingen | 20
+Tübingen Stadtwerke | 20
+Tübingen Polizei Nachrichten | 20
+Tübingen Müllabfuhr Termine | 20
+VHS Tübingen Kurse | 20
+Tübingen Schulen Anmeldung | 20
+Tübingen Vereine | 20
+Tübingen Ärzte Termin | 20
+Metzingen outlet shopping English | 20
+Böblingen tourism English | 20
+Schwäbisch Hall tourism English | 20
+Black Forest day trips English | 20
+Lake Constance tourism English | 20
+Hohenzollern castle visit English | 20

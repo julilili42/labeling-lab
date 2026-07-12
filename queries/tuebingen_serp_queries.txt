@@ -1,0 +1,385 @@
+# SERP query list for English Tübingen relevance labeling.
+#
+# Use one non-comment query at a time in the labeling UI.
+# The list is intentionally mixed: clear positives, hard positives, German
+# Tübingen pages, nearby-place negatives, broad Germany negatives, and noisy
+# web patterns. Do not pre-filter these before labeling.
+
+# Core English Tübingen tourism and city pages
+Tübingen tourism english
+Tuebingen tourism english
+Tubingen tourism english
+Tübingen Germany english
+Tuebingen Germany english
+Tubingen Germany english
+visit Tübingen english
+visit Tuebingen english
+Tübingen travel guide english
+Tuebingen travel guide english
+Tübingen city guide english
+Tuebingen city guide english
+Tübingen visitor guide english
+Tuebingen visitor guide english
+Tübingen official tourism english
+Tuebingen official tourism english
+Tübingen tourist information english
+Tuebingen tourist information english
+Tübingen old town english
+Tuebingen old town english
+Tübingen Neckar english
+Tuebingen Neckar english
+Tübingen punting english
+Tuebingen punting english
+Tübingen Stocherkahn english
+Tuebingen Stocherkahn english
+Tübingen castle english
+Tuebingen castle english
+Hohentübingen Castle english
+Hohentuebingen Castle english
+Tübingen Hölderlinturm english
+Tuebingen Holderlin tower english
+Tübingen market square english
+Tuebingen market square english
+Tübingen monastery english
+Tuebingen monastery english
+Tübingen botanical garden english
+Tuebingen botanical garden english
+Tübingen museums english
+Tuebingen museums english
+Tübingen restaurants english
+Tuebingen restaurants english
+Tübingen hotels english
+Tuebingen hotels english
+Tübingen accommodation english
+Tuebingen accommodation english
+Tübingen events english
+Tuebingen events english
+Tübingen Christmas market english
+Tuebingen Christmas market english
+things to do in Tübingen english
+things to do in Tuebingen english
+best things to do Tübingen english
+best things to do Tuebingen english
+one day in Tübingen english
+one day in Tuebingen english
+weekend in Tübingen english
+weekend in Tuebingen english
+
+# Official city, local services, civic information
+Tübingen city official english
+Tuebingen city official english
+site:tuebingen.de/en Tübingen
+site:tuebingen.de/en tourism
+site:tuebingen.de/en city
+site:tuebingen.de/en living
+site:tuebingen.de/en events
+site:tuebingen.de/en international
+Tübingen city administration english
+Tuebingen city administration english
+Tübingen public transport english
+Tuebingen public transport english
+Tübingen train station english
+Tuebingen train station english
+Tübingen bus english
+Tuebingen bus english
+Tübingen parking english
+Tuebingen parking english
+Tübingen cycling english
+Tuebingen cycling english
+Tübingen city map english
+Tuebingen city map english
+Tübingen foreigners office english
+Tuebingen foreigners office english
+Tübingen international office city english
+Tuebingen international office city english
+living in Tübingen english
+living in Tuebingen english
+moving to Tübingen english
+moving to Tuebingen english
+expats Tübingen english
+expats Tuebingen english
+Tübingen local government english
+Tuebingen local government english
+
+# University of Tübingen and student life
+University of Tübingen english
+University of Tuebingen english
+University of Tubingen english
+site:uni-tuebingen.de/en Tübingen
+site:uni-tuebingen.de/en University of Tübingen
+University of Tübingen international students
+University of Tuebingen international students
+University of Tübingen admissions english
+University of Tuebingen admissions english
+University of Tübingen study abroad
+University of Tuebingen study abroad
+University of Tübingen exchange students
+University of Tuebingen exchange students
+University of Tübingen Erasmus english
+University of Tuebingen Erasmus english
+University of Tübingen campus english
+University of Tuebingen campus english
+University of Tübingen departments english
+University of Tuebingen departments english
+University of Tübingen courses english
+University of Tuebingen courses english
+University of Tübingen research english
+University of Tuebingen research english
+University of Tübingen library english
+University of Tuebingen library english
+University of Tübingen alumni english
+University of Tuebingen alumni english
+student life Tübingen english
+student life Tuebingen english
+Tübingen student housing english
+Tuebingen student housing english
+Tübingen semester dates english
+Tuebingen semester dates english
+
+# Research, science, medicine, AI
+Tübingen research institute english
+Tuebingen research institute english
+Tübingen AI Center english
+Tuebingen AI Center english
+Tübingen machine learning english
+Tuebingen machine learning english
+Cyber Valley Tübingen english
+Cyber Valley Tuebingen english
+Max Planck Tübingen english
+Max Planck Tuebingen english
+MPI Tübingen english
+MPI Tuebingen english
+Tübingen neuroscience english
+Tuebingen neuroscience english
+Tübingen computer science english
+Tuebingen computer science english
+Tübingen medical research english
+Tuebingen medical research english
+University Hospital Tübingen english
+University Hospital Tuebingen english
+Tübingen hospital english
+Tuebingen hospital english
+Tübingen clinic english
+Tuebingen clinic english
+Tübingen health science english
+Tuebingen health science english
+Tübingen conference AI english
+Tuebingen conference AI english
+Tübingen academic conference english
+Tuebingen academic conference english
+
+# Culture, history, events, local institutions
+Tübingen culture english
+Tuebingen culture english
+Tübingen history english
+Tuebingen history english
+Tübingen museum english official
+Tuebingen museum english official
+Tübingen theatre english
+Tuebingen theatre english
+Tübingen cinema english
+Tuebingen cinema english
+Tübingen music festival english
+Tuebingen music festival english
+Tübingen film festival english
+Tuebingen film festival english
+Tübingen book festival english
+Tuebingen book festival english
+Tübingen concerts english
+Tuebingen concerts english
+Tübingen art english
+Tuebingen art english
+Tübingen exhibitions english
+Tuebingen exhibitions english
+Tübingen guided tours english
+Tuebingen guided tours english
+Tübingen walking tour english
+Tuebingen walking tour english
+Tübingen day trip english
+Tuebingen day trip english
+
+# Nature, sports, outdoors, regional travel around Tübingen
+Tübingen hiking english
+Tuebingen hiking english
+Tübingen cycling routes english
+Tuebingen cycling routes english
+Tübingen nature english
+Tuebingen nature english
+Tübingen parks english
+Tuebingen parks english
+Tübingen river english
+Tuebingen river english
+Tübingen Neckar valley english
+Tuebingen Neckar valley english
+Tübingen Swabian Alb english
+Tuebingen Swabian Alb english
+Tübingen nearby attractions english
+Tuebingen nearby attractions english
+Tübingen day trips english
+Tuebingen day trips english
+Tübingen sports english
+Tuebingen sports english
+Tübingen swimming english
+Tuebingen swimming english
+
+# Business, jobs, conferences, startups
+Tübingen jobs english
+Tuebingen jobs english
+Tübingen careers english
+Tuebingen careers english
+Tübingen startup english
+Tuebingen startup english
+Tübingen business english
+Tuebingen business english
+Tübingen technology company english
+Tuebingen technology company english
+Tübingen biotech english
+Tuebingen biotech english
+Tübingen conference venue english
+Tuebingen conference venue english
+Tübingen congress english
+Tuebingen congress english
+Tübingen relocation english
+Tuebingen relocation english
+
+# English-language hard positives with broader wording
+German university town Tübingen english
+German student city Tübingen english
+historic university town Tübingen english
+medieval town Tübingen english
+romantic town Tübingen english
+Germany hidden gem Tübingen english
+Baden-Württemberg Tübingen english tourism
+Neckar river Tübingen english
+Swabia Tübingen english
+southwest Germany Tübingen english
+Tübingen Baden Württemberg english
+Tuebingen Baden Wuerttemberg english
+Tübingen Germany guide for international students
+Tuebingen Germany guide for international students
+Tübingen for researchers english
+Tuebingen for researchers english
+
+# German Tübingen pages: useful hard negatives for English-only constraint
+Tübingen Öffnungszeiten
+Tübingen Veranstaltungen
+Tübingen Rathaus
+Tübingen Bürgeramt
+Tübingen Stadtverwaltung
+Tübingen Tourismus
+Tübingen Sehenswürdigkeiten
+Tübingen Altstadt
+Tübingen Stocherkahn
+Tübingen Schloss Hohentübingen
+Tübingen Hölderlinturm
+Tübingen Stadtmuseum
+Tübingen Kunsthalle
+Tübingen Stadtbücherei
+Tübingen Veranstaltungskalender
+Tübingen Bus Fahrplan
+Tübingen Parken
+Tübingen Wohnungsmarkt
+Tübingen Wohnung mieten
+Tübingen Jobs
+Tübingen Stellenangebote
+Tübingen Speisekarte
+Tübingen Restaurant
+Tübingen Hotel
+Tübingen Nachrichten
+Tübingen Polizeibericht
+Tübingen Amtsblatt
+Universität Tübingen Bewerbung
+Universität Tübingen Studiengänge
+Universität Tübingen Vorlesungsverzeichnis
+Universitätsklinikum Tübingen Patienten
+Universitätsklinikum Tübingen Termine
+
+# Nearby and similar cities: English negatives and boundary cases
+Reutlingen tourism english
+Reutlingen Germany english
+Rottenburg am Neckar english
+Herrenberg tourism english
+Stuttgart tourism english
+Stuttgart Germany travel guide
+Heidelberg tourism english
+Heidelberg university town english
+Freiburg tourism english
+Freiburg university english
+Ulm tourism english
+Ulm Germany travel guide
+Konstanz tourism english
+Konstanz Germany english
+Karlsruhe tourism english
+Mannheim tourism english
+Baden-Baden tourism english
+Esslingen tourism english
+Ludwigsburg tourism english
+Black Forest tourism english
+Swabian Alb tourism english
+Baden Württemberg tourism english
+Neckar river travel english
+German university cities english
+best university towns Germany english
+historic towns Baden-Württemberg english
+student cities Germany english
+
+# Broader Germany / travel negatives that may mention Tübingen incidentally
+Germany travel itinerary Tübingen Heidelberg Munich
+Germany road trip Tübingen
+Baden Württemberg travel itinerary Tübingen
+southern Germany travel itinerary Tübingen
+best towns in Germany Tübingen
+best medieval towns Germany Tübingen
+best universities in Germany Tübingen
+German research universities ranking Tübingen
+Germany student cities Tübingen
+German castles Tübingen
+Neckar river towns Tübingen
+Swabian towns Germany Tübingen
+Germany hidden gems Tübingen
+Germany train itinerary Tübingen
+Europe university towns Tübingen
+
+# Off-topic / noisy SERPs for negative examples
+Tubingen syndrome
+Tubingen scientific paper
+Tuebingen dataset
+Tuebingen model
+Tuebingen machine learning paper
+Tübingen horse
+Tübingen weather
+Tübingen map
+Tübingen time now
+Tübingen postal code
+Tübingen real estate
+Tübingen apartment rent
+Tübingen used cars
+Tübingen shopping
+Tübingen restaurant menu
+Tübingen football
+Tübingen basketball
+Tübingen election results
+Tübingen population
+Tübingen latitude longitude
+Tübingen pronunciation
+Tübingen meaning
+Tübingen Wikipedia
+Tuebingen Wikipedia
+Tubingen Wikipedia
+
+# Site-specific probes: useful for discovering official or semi-official SERPs
+site:tuebingen.de Tübingen english
+site:tuebingen-info.de english Tübingen
+site:uni-tuebingen.de/en international
+site:uni-tuebingen.de/en research
+site:uni-tuebingen.de/en students
+site:medizin.uni-tuebingen.de/en Tübingen
+site:cyber-valley.de Tübingen
+site:tuebingen.ai Tübingen
+site:mpg.de Tübingen english
+site:tripadvisor.com Tübingen
+site:wikivoyage.org Tübingen
+site:germany.travel Tübingen
+site:visit-bw.com Tübingen english
+site:komoot.com Tübingen english
+site:outdooractive.com Tübingen english

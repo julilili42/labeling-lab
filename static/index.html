@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Labeling Lab</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Labeling Lab</h1>
+          <p class="muted">Collect, review, label, and train local verdict models</p>
+        </div>
+        <div class="stats" id="stats"></div>
+      </header>
+
+      <section class="pipeline-panel">
+        <div class="pipeline-heading">
+          <div>
+            <h2>Pipeline</h2>
+            <p class="muted">One local job at a time. Progress stays visible here.</p>
+          </div>
+          <span id="pipeline-state" class="pill">idle</span>
+        </div>
+        <div class="pipeline-grid">
+          <label>Limit <input id="pipeline-limit" class="small-input" type="number" min="1" value="1500" /></label>
+          <label>Workers <input id="pipeline-workers" class="small-input" type="number" min="1" max="32" value="4" /></label>
+          <label>Teacher model <input id="pipeline-model" value="qwen2.5:7b" /></label>
+          <label>Link crawl DB <input id="pipeline-crawl-db" placeholder="optional pages.sqlite" /></label>
+        </div>
+        <div class="pipeline-actions">
+          <button data-pipeline="search" type="button">1. Collect SERP</button>
+          <button data-pipeline="fetch" type="button">2. Fetch pages</button>
+          <button data-pipeline="label" type="button">3. Auto-label</button>
+          <button data-pipeline="train-page" type="button">4. Train PageVerdict</button>
+          <button data-pipeline="train-link" type="button">5. Train LinkVerdict</button>
+        </div>
+        <div id="pipeline-data" class="stats"></div>
+        <pre id="pipeline-output" class="pipeline-output">No job started.</pre>
+      </section>
+
+      <section class="search-panel">
+        <label class="query-label" for="search-query">Query</label>
+        <div class="search-row">
+          <input id="search-query" placeholder="Search query" autofocus />
+          <button id="search" type="button">Search</button>
+          <a class="export" href="/api/export/serp-labels.jsonl">Export JSONL</a>
+        </div>
+      </section>
+
+      <section class="search-panel">
+        <label class="query-label" for="crawler-csv-path">Candidate JSONL</label>
+        <div class="search-row">
+          <select id="candidate-mode">
+            <option value="pages">Pages</option>
+            <option value="links" selected>Links</option>
+          </select>
+          <input id="crawler-csv-path" value="data/link_candidates.jsonl" />
+          <input id="crawler-limit" class="small-input" type="number" min="1" max="2000" value="200" />
+          <label class="check-label">
+            <input id="crawler-unlabeled-only" type="checkbox" checked />
+            <span>Unlabeled</span>
+          </label>
+          <button id="import-crawler" type="button">Import</button>
+          <button id="load-crawler" type="button">Load candidates</button>
+          <a class="export" href="/api/export/link-labels.jsonl">Export link labels</a>
+        </div>
+      </section>
+
+      <p class="status" id="status" role="status"></p>
+      <section class="deck" id="items"></section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
