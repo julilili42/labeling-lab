@@ -2,7 +2,7 @@ const state = {
   results: [],
   currentIndex: 0,
   undoStack: [],
-  mode: "links",
+  mode: "pages",
 }
 
 const items = document.querySelector("#items")
@@ -23,6 +23,8 @@ const pipelineLimit = document.querySelector("#pipeline-limit")
 const pipelineWorkers = document.querySelector("#pipeline-workers")
 const pipelineModel = document.querySelector("#pipeline-model")
 const pipelineCrawlDb = document.querySelector("#pipeline-crawl-db")
+const pipelineLog = document.querySelector("#pipeline-log")
+const manualHint = document.querySelector("#manual-hint")
 
 const ratings = [
   { value: 1, label: "Reject" },
@@ -80,6 +82,7 @@ function renderPipeline(status) {
   const data = status.data || {}
   pipelineState.textContent = job.running ? "running" : "idle"
   pipelineState.classList.toggle("running", Boolean(job.running))
+  if (job.running) pipelineLog.open = true
   pipelineData.innerHTML = [
     ["SERP", data.serp_rows], ["snapshots", data.snapshots],
     ["teacher labels", data.teacher_labels], ["reviewed", data.reviewed_labels],
@@ -126,7 +129,7 @@ function ratingCounts(counts) {
 async function loadStats() {
   const endpoint = state.mode === "links" ? "/api/link-stats" : "/api/stats"
   const stats = await fetchJson(endpoint)
-  const noun = state.mode === "links" ? "links" : "results"
+  const noun = state.mode === "links" ? "links" : state.mode === "teacher" ? "page labels" : "pages"
   statsBox.innerHTML = [
     `<span class="stat"><strong>${stats.results}</strong> ${noun}</span>`,
     `<span class="stat"><strong>${stats.rated}</strong> rated</span>`,
@@ -345,6 +348,11 @@ function syncMode() {
   if (!crawlerCsvPathInput.value.trim() || Object.values(defaultPaths).includes(crawlerCsvPathInput.value.trim())) {
     crawlerCsvPathInput.value = defaultPaths[mode]
   }
+  manualHint.textContent = {
+    pages: "Import crawler page candidates, then rate one page at a time.",
+    links: "Import crawler link candidates, then decide which links are worth following.",
+    teacher: "Load a review batch to correct the local teacher before training.",
+  }[mode]
 }
 
 async function importCrawlerCandidates() {
@@ -570,4 +578,12 @@ setInterval(loadPipelineStatus, 1200)
 
 document.querySelectorAll("[data-pipeline]").forEach((button) => {
   button.addEventListener("click", () => runPipeline(button.dataset.pipeline))
+})
+
+document.querySelectorAll("[data-open-mode]").forEach((button) => {
+  button.addEventListener("click", () => {
+    candidateModeInput.value = button.dataset.openMode
+    syncMode()
+    document.querySelector("#manual-labeling").scrollIntoView({ behavior: "smooth", block: "start" })
+  })
 })
