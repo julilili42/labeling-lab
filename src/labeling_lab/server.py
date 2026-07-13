@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import os
@@ -21,11 +22,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from auto_labeling.jsonl import append_jsonl, utc_now
+from labeling_lab.benchmark import comparison_report, create_review_queue
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = ROOT_DIR / "static"
 DEFAULT_DB_PATH = ROOT_DIR / "data" / "labeling.sqlite"
+BENCHMARK_DIR = ROOT_DIR / "data" / "benchmarks"
+SEARCH_ENGINE_DIR = ROOT_DIR.parent / "search-engine"
 
 SERPER_ENDPOINT = "https://google.serper.dev/search"
 SERPER_PROVIDER = "serper"
@@ -46,10 +50,11 @@ class JobState:
         self.command = ""
         self.output: list[str] = []
         self.lock = threading.Lock()
+        self.running = False
 
     def snapshot(self) -> dict[str, object]:
         with self.lock:
-            running = self.process is not None and self.process.poll() is None
+            running = self.running or (self.process is not None and self.process.poll() is None)
             return {"running": running, "command": self.command, "output": self.output[-80:]}
 
 
@@ -207,6 +212,34 @@ class PipelineRequest(BaseModel):
     crawl_db: str | None = None
 
 
+class BenchmarkRequest(BaseModel):
+    snapshot: str
+    baseline_page: str
+    candidate_page: str
+    baseline_link: str
+    candidate_link: str
+    per_stratum: int = Field(default=10, ge=1, le=100)
+
+
+class BenchmarkRatingRequest(BaseModel):
+    snapshot: str
+    item_id: str
+    rating: int = Field(ge=1, le=5)
+
+
+class BenchmarkDecisionRequest(BaseModel):
+    snapshot: str
+    decision: Literal["keep_baseline", "release_candidate", "needs_more_review"]
+    notes: str = ""
+
+
+class SmokeRequest(BaseModel):
+    baseline_page: str
+    candidate_page: str
+    baseline_link: str
+    candidate_link: str
+
+
 def _line_count(path: Path) -> int:
     if not path.exists():
         return 0
@@ -234,6 +267,36 @@ def _read_job_output(process: subprocess.Popen[str]) -> None:
         with JOB.lock:
             JOB.output.append(line.rstrip())
     process.wait()
+
+
+def _smoke_worker(artifacts: list[Path], output: Path) -> None:
+    names = ("baseline", "candidate")
+    try:
+        for name, page_model, link_model in zip(names, artifacts[::2], artifacts[1::2], strict=True):
+            command = [
+                "uv", "run", "--directory", str(SEARCH_ENGINE_DIR), "crawl", "benchmark",
+                "--seeds", str(SEARCH_ENGINE_DIR / "benchmark" / "crawl" / "seeds.toml"),
+                "--output", str(output / name), "--page-model", str(page_model),
+                "--link-model", str(link_model), "--pages-per-seed", "15",
+            ]
+            with JOB.lock:
+                JOB.command = " ".join(command)
+                JOB.output.append(f"$ {JOB.command}")
+                JOB.process = subprocess.Popen(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                process = JOB.process
+            _read_job_output(process)
+            if process.returncode:
+                return
+        report: dict[str, object] = {}
+        for name in names:
+            with sqlite3.connect(output / name / "pages.sqlite") as con:
+                fetched = con.execute("SELECT COUNT(*) FROM pages").fetchone()[0] + con.execute("SELECT COUNT(*) FROM rejected_pages").fetchone()[0]
+                accepted = con.execute("SELECT COUNT(*) FROM pages").fetchone()[0]
+                report[name] = {"fetched_pages": fetched, "index_accepts": accepted, "fetch_yield": accepted / fetched if fetched else 0.0}
+        (output / "live-smoke.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    finally:
+        with JOB.lock:
+            JOB.running = False
 
 
 def _pipeline_command(payload: PipelineRequest) -> list[str]:
@@ -504,6 +567,20 @@ def resolve_import_path(path_value: str) -> Path:
     if raw.is_absolute():
         return raw
     return ROOT_DIR / raw
+
+
+def benchmark_key(snapshot: Path) -> str:
+    return hashlib.sha256(str(snapshot.resolve()).encode()).hexdigest()[:12]
+
+
+def benchmark_paths(snapshot: Path) -> tuple[Path, Path, Path]:
+    key = benchmark_key(snapshot)
+    BENCHMARK_DIR.mkdir(parents=True, exist_ok=True)
+    return (
+        BENCHMARK_DIR / f"queue-{key}.jsonl",
+        BENCHMARK_DIR / f"reviews-{key}.jsonl",
+        BENCHMARK_DIR / f"report-{key}.json",
+    )
 
 
 def serper_api_key() -> str:
@@ -1618,6 +1695,77 @@ def run_pipeline(payload: PipelineRequest) -> dict[str, object]:
         )
         threading.Thread(target=_read_job_output, args=(JOB.process,), daemon=True).start()
     return pipeline_status()
+
+
+@app.post("/api/evaluate")
+def evaluate_benchmark(payload: BenchmarkRequest) -> dict[str, object]:
+    snapshot = resolve_import_path(payload.snapshot)
+    artifacts = [
+        resolve_import_path(payload.baseline_page), resolve_import_path(payload.candidate_page),
+        resolve_import_path(payload.baseline_link), resolve_import_path(payload.candidate_link),
+    ]
+    if not snapshot.is_file() or not all(path.is_file() for path in artifacts):
+        raise HTTPException(status_code=404, detail="benchmark_snapshot_or_artifact_not_found")
+    queue_path, reviews_path, report_path = benchmark_paths(snapshot)
+    queue = create_review_queue(
+        snapshot, queue_path,
+        exclude=[ROOT_DIR / "data" / "labels.final.jsonl", ROOT_DIR / "data" / "eval_holdout.jsonl"],
+        per_stratum=payload.per_stratum,
+    )
+    if not reviews_path.exists():
+        reviews_path.touch()
+    try:
+        report = comparison_report(snapshot, *artifacts, reviews_path)
+    except (KeyError, ValueError, OSError) as exc:
+        raise HTTPException(status_code=400, detail=f"benchmark_failed: {exc}") from exc
+    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    return {"queue": queue, "report": report, "report_path": str(report_path)}
+
+
+@app.post("/api/evaluate/rating")
+def rate_benchmark(payload: BenchmarkRatingRequest) -> ActionResponse:
+    snapshot = resolve_import_path(payload.snapshot)
+    _, reviews_path, _ = benchmark_paths(snapshot)
+    append_jsonl(reviews_path, {
+        "id": payload.item_id,
+        "label": label_from_rating(payload.rating),
+        "rating": payload.rating,
+        "reviewed_at": utc_now(),
+    })
+    return ActionResponse()
+
+
+@app.get("/api/evaluate/report")
+def benchmark_report(snapshot: str) -> FileResponse:
+    _, _, report_path = benchmark_paths(resolve_import_path(snapshot))
+    if not report_path.is_file():
+        raise HTTPException(status_code=404, detail="benchmark_report_not_found")
+    return FileResponse(report_path, media_type="application/json")
+
+
+@app.post("/api/evaluate/decision")
+def record_benchmark_decision(payload: BenchmarkDecisionRequest) -> ActionResponse:
+    snapshot = resolve_import_path(payload.snapshot)
+    append_jsonl(BENCHMARK_DIR / "decisions.jsonl", {
+        "snapshot": str(snapshot), "decision": payload.decision,
+        "notes": payload.notes, "decided_at": utc_now(),
+    })
+    return ActionResponse()
+
+
+@app.post("/api/evaluate/live-smoke")
+def live_smoke(payload: SmokeRequest) -> dict[str, object]:
+    artifacts = [resolve_import_path(value) for value in (payload.baseline_page, payload.baseline_link, payload.candidate_page, payload.candidate_link)]
+    if not all(path.is_file() for path in artifacts):
+        raise HTTPException(status_code=404, detail="benchmark_artifact_not_found")
+    with JOB.lock:
+        if JOB.running or (JOB.process is not None and JOB.process.poll() is None):
+            raise HTTPException(status_code=409, detail="pipeline_job_already_running")
+        output = BENCHMARK_DIR / "live-smoke" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        JOB.running = True
+        JOB.output = ["Starting isolated baseline and candidate smoke runs."]
+        threading.Thread(target=_smoke_worker, args=(artifacts, output), daemon=True).start()
+    return {"output": str(output), **pipeline_status()}
 
 
 def jsonl_response(

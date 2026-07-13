@@ -7,129 +7,36 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">LOCAL MODEL WORKBENCH</p>
-          <h1>Labeling Lab</h1>
-          <p class="muted">Turn pages and links into better local verdict models.</p>
-        </div>
-        <span class="privacy-note">Runs on this computer</span>
-      </header>
+    <main>
+      <h1>Labeling Lab</h1>
+      <nav aria-label="Sections">
+        <button data-tab="data" type="button">Data</button>
+        <button data-tab="review" type="button">Review</button>
+        <button data-tab="evaluate" type="button">Evaluate</button>
+      </nav>
 
-      <section class="welcome">
-        <div>
-          <h2>Start here</h2>
-          <p>Work from left to right. You only need the next card — the rest can wait.</p>
-        </div>
-        <span id="pipeline-state" class="pill">Ready</span>
+      <section id="data">
+        <p><button data-pipeline="search">Collect</button> <button data-pipeline="fetch">Fetch</button> <button data-pipeline="label">Auto-label</button> <button data-pipeline="apply-reviews">Apply reviews</button></p>
+        <details><summary>Options and log</summary><label>Limit <input id="pipeline-limit" type="number" min="1" value="1500" /></label> <label>Workers <input id="pipeline-workers" type="number" min="1" value="4" /></label> <label>Teacher model <input id="pipeline-model" value="qwen2.5:7b" /></label><pre id="pipeline-output">No job started.</pre></details>
       </section>
 
-      <section class="workflow" aria-label="Main workflow">
-        <article class="workflow-card">
-          <span class="step">1</span>
-          <h2>Build a page dataset</h2>
-          <p>Find pages, download them, then let your local teacher label them.</p>
-          <div class="card-actions">
-            <button class="primary" data-pipeline="search" type="button">Find pages</button>
-            <button data-pipeline="fetch" type="button">Fetch pages</button>
-            <button data-pipeline="label" type="button">Auto-label</button>
-          </div>
-        </article>
-
-        <article class="workflow-card">
-          <span class="step">2</span>
-          <h2>Review uncertain items</h2>
-          <p>Correct teacher labels or label crawler candidates yourself when judgement matters.</p>
-          <div class="card-actions">
-            <button data-open-mode="teacher" type="button">Review teacher labels</button>
-            <button data-open-mode="pages" type="button">Label pages</button>
-            <button data-open-mode="links" type="button">Label links</button>
-          </div>
-        </article>
-
-        <article class="workflow-card">
-          <span class="step">3</span>
-          <h2>Train and release</h2>
-          <p>Apply reviewed labels, then train the model you want to update.</p>
-          <div class="card-actions">
-            <button data-pipeline="apply-reviews" type="button">Apply reviews</button>
-            <button class="primary" data-pipeline="train-page" type="button">Train PageVerdict</button>
-            <button data-pipeline="train-link" type="button">Train LinkVerdict</button>
-          </div>
-        </article>
+      <section id="review" hidden>
+        <p><label>Review <select id="candidate-mode"><option value="pages">Page candidates</option><option value="links">Link candidates</option><option value="teacher">Teacher batches</option></select></label> <button id="load-review" type="button">Load next</button></p>
+        <div id="item">No item loaded.</div>
       </section>
 
-      <section class="status-panel">
-        <div>
-          <h2>Your workspace</h2>
-          <p class="muted">A quick check before you start a new job.</p>
-        </div>
-        <div id="pipeline-data" class="stats"></div>
+      <section id="evaluate" hidden>
+        <p><label>Snapshot <input id="snapshot" placeholder="data/benchmarks/run/features.jsonl" /></label></p>
+        <p><label>Baseline page <input id="baseline-page" value="../search-engine/verdict-ml/artifacts/page_verdict_handlabeled.joblib" /></label></p>
+        <p><label>Candidate page <input id="candidate-page" value="data/models/page_verdict.joblib" /></label></p>
+        <p><label>Baseline link <input id="baseline-link" value="../search-engine/verdict-ml/artifacts/link_verdict.joblib" /></label></p>
+        <p><label>Candidate link <input id="candidate-link" value="data/models/link_verdict.joblib" /></label></p>
+        <p><button id="evaluate-run" type="button">Replay and create review queue</button> <button id="live-smoke" type="button">Run live smoke</button></p>
+        <div id="evaluation">No comparison run.</div>
+        <div id="queue"></div>
+        <p id="decision" hidden>Human decision: <button data-decision="keep_baseline">Keep baseline</button> <button data-decision="release_candidate">Release candidate</button> <button data-decision="needs_more_review">More review</button></p>
       </section>
-
-      <details class="advanced-settings">
-        <summary>Pipeline settings <span>Optional</span></summary>
-        <p class="muted">The defaults are a good starting point. Change these only when you know why.</p>
-        <div class="pipeline-grid">
-          <label>How many items to process <input id="pipeline-limit" class="small-input" type="number" min="1" value="1500" /></label>
-          <label>Parallel workers <input id="pipeline-workers" class="small-input" type="number" min="1" max="32" value="4" /></label>
-          <label>Teacher model <input id="pipeline-model" value="qwen2.5:7b" /></label>
-          <label>Link crawl database <input id="pipeline-crawl-db" placeholder="Only for LinkVerdict" /></label>
-        </div>
-      </details>
-
-      <details id="pipeline-log" class="job-log">
-        <summary>Job progress and log</summary>
-        <pre id="pipeline-output" class="pipeline-output">No job started.</pre>
-      </details>
-
-      <section class="manual-panel" id="manual-labeling">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">MANUAL LABELING</p>
-            <h2>Review individual items</h2>
-            <p id="manual-hint" class="muted">Choose a source, import its file, then rate one item at a time.</p>
-          </div>
-          <div class="stats" id="stats"></div>
-        </div>
-
-        <div class="manual-controls">
-          <label>
-            What do you want to review?
-            <select id="candidate-mode">
-              <option value="pages" selected>Page candidates</option>
-              <option value="links">Link candidates</option>
-              <option value="teacher">Teacher review batch</option>
-            </select>
-          </label>
-          <label class="path-field">
-            Input file
-            <input id="crawler-csv-path" value="data/pageverdict_candidates.jsonl" />
-          </label>
-          <label>
-            Items to load
-            <input id="crawler-limit" class="small-input" type="number" min="1" max="2000" value="200" />
-          </label>
-          <label class="check-label">
-            <input id="crawler-unlabeled-only" type="checkbox" checked />
-            <span>Only unlabeled items</span>
-          </label>
-          <button class="primary" id="import-crawler" type="button">Import and start</button>
-          <button id="load-crawler" type="button">Load saved candidates</button>
-        </div>
-
-        <div class="secondary-row">
-          <span>Need new page candidates from Serper?</span>
-          <input id="search-query" placeholder="Search query" />
-          <button id="search" type="button">Search</button>
-          <a class="export" href="/api/export/serp-labels.jsonl">Export page labels</a>
-          <a class="export" href="/api/export/link-labels.jsonl">Export link labels</a>
-        </div>
-      </section>
-
-      <p class="status" id="status" role="status"></p>
-      <section class="deck" id="items"></section>
+      <p id="status" role="status"></p>
     </main>
     <script src="/static/app.js"></script>
   </body>
