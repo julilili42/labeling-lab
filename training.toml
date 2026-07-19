@@ -1,0 +1,31 @@
+schema_version = 1
+random_seed = 20260718
+output_dir = "data/release"
+
+[page]
+prompt_version = "page-v4"
+label_files = [
+  "data/page_v4_labels_clean.jsonl",
+  "data/page_hard_negatives_20260719/training_labels.jsonl",
+]
+snapshot_files = [
+  "data/extra_pool_input.jsonl",
+  "data/crawlmix2_recheck_input.jsonl",
+  "data/holdout_v3_input.jsonl",
+  "data/train_v4_snapshots.jsonl",
+  "data/page_hard_negatives_20260719/snapshots.jsonl",
+]
+
+[link]
+prompt_version = "link-v2"
+use_teacher_labels = false
+human_review_files = ["data/labels.reviewed.jsonl"]
+human_training_sets = [
+  "link-human-holdout-v1",
+  "link-positive-boundaries-v1",
+  "link-release-audit-v2-accepted",
+  "link-release-audit-v2-rejected",
+  "link-release-audit-v3",
+  "link-release-audit-v4",
+  "link-targeted-r2",
+]

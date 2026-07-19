@@ -12,6 +12,7 @@ dependencies = [
 [project.scripts]
 auto-label = "auto_labeling.cli:main"
 labeling-lab = "labeling_lab.server:main"
+train-models = "labeling_lab.pipeline:main"
 
 [dependency-groups]
 dev = ["pytest>=9.0.3"]

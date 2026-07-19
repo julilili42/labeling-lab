@@ -3,12 +3,12 @@ import tempfile
 import unittest
 
 from auto_labeling.fetcher import parse_html
-from auto_labeling.cli import cmd_apply_reviews, query_progress
+from auto_labeling.cli import _resume_rows, cmd_apply_reviews, query_progress
 from auto_labeling.jsonl import read_jsonl, write_jsonl
 from auto_labeling.queries import parse_query_line
-from auto_labeling.teacher import postprocess_label
-from auto_labeling.train import make_text, train_model
+from auto_labeling.teacher import build_link_prompt, label_snapshot, postprocess_label
 from auto_labeling.urls import normalize_url
+from labeling_lab.dataset import page_text
 
 
 class CoreTests(unittest.TestCase):
@@ -25,21 +25,22 @@ class CoreTests(unittest.TestCase):
 
     def test_parse_html_extracts_visible_fields(self):
         parsed = parse_html(
-            "<html><head><title>Hello</title><meta name='description' content='Desc'>"
+            "<html lang='de'><head><title>Hello</title><meta name='description' content='Desc'>"
             "<script>bad()</script></head><body><h1>Main</h1><h2>Sub</h2>Text</body></html>"
         )
         self.assertEqual(parsed["title"], "Hello")
         self.assertEqual(parsed["description"], "Desc")
         self.assertEqual(parsed["h1"], "Main")
+        self.assertEqual(parsed["html_lang"], "de")
         self.assertIn("Text", parsed["text"])
         self.assertNotIn("bad", parsed["text"])
 
-    def test_postprocess_forces_research_negative(self):
+    def test_postprocess_forces_research_negative_even_when_teacher_calls_it_useful(self):
         label = postprocess_label(
             {
                 "english": True,
                 "tuebingen_related": True,
-                "general_search_useful": False,
+                "general_search_useful": True,
                 "research_only": True,
                 "label": "positive",
                 "confidence": 0.95,
@@ -47,6 +48,47 @@ class CoreTests(unittest.TestCase):
             }
         )
         self.assertEqual(label["label"], "negative")
+
+    def test_postprocess_rejects_clearly_german_destination(self):
+        label = postprocess_label(
+            {
+                "english": True,
+                "tuebingen_related": True,
+                "general_search_useful": True,
+                "research_only": False,
+                "label": "positive",
+                "confidence": 0.95,
+                "title": "Hotels in Tübingen ab € 69/Nacht - Auf KAYAK suchen",
+            }
+        )
+        self.assertFalse(label["english"])
+        self.assertEqual(label["label"], "negative")
+
+    def test_fresh_teacher_label_overrides_stale_snapshot_label(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            label = label_snapshot(
+                {
+                    "id": "one",
+                    "url": "https://example.test/tuebingen",
+                    "text": "Useful Tuebingen visitor guide",
+                    "text_hash": "one",
+                    "label": "negative",
+                    "english": False,
+                },
+                teacher="mock",
+                model="mock",
+                cache_dir=Path(tmp),
+            )
+            self.assertEqual(label["label"], "positive")
+
+    def test_link_teacher_prompt_includes_discovery_and_destination(self):
+        prompt = build_link_prompt(
+            {"parent_url": "https://parent.test/", "anchor": "Visit", "target_url": "https://target.test/", "target_depth": 2},
+            {"title": "Tuebingen guide", "text": "Useful information"},
+        )
+        self.assertIn("Parent URL: https://parent.test/", prompt)
+        self.assertIn("Anchor: Visit", prompt)
+        self.assertIn("Title: Tuebingen guide", prompt)
 
     def test_jsonl_roundtrip(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -64,26 +106,44 @@ class CoreTests(unittest.TestCase):
         )
         self.assertEqual(progress, {"A": 10, "B": 2})
 
+    def test_resume_rejects_mixed_prompt_versions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "labels.jsonl"
+            write_jsonl(
+                path,
+                [
+                    {
+                        "prompt_version": "new",
+                        "prompt_sha256": "old-hash",
+                        "teacher": "ollama",
+                        "model": "qwen",
+                    }
+                ],
+            )
+            with self.assertRaises(SystemExit):
+                _resume_rows(
+                    path,
+                    resume=True,
+                    refresh=False,
+                    prompt_version="new",
+                    prompt_hash="new-hash",
+                    teacher="ollama",
+                    model="qwen",
+                )
+
     def test_training_text_matches_pageverdict_shape(self):
-        text = make_text({"title": "A", "url": "https://example.com/x", "snippet": "B"})
+        text = page_text(
+            {
+                "title": "A",
+                "url": "https://example.com/x",
+                "display_url": "example.com/x",
+                "snippet": "B",
+            }
+        )
         self.assertIn("title: A", text)
         self.assertIn("url: https://example.com/x", text)
         self.assertIn("display_url: example.com/x", text)
         self.assertIn("snippet: B", text)
-
-    def test_page_model_bundle_records_text_feature(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            labels = root / "labels.jsonl"
-            rows = [
-                {"label": "positive" if index % 2 else "negative", "title": f"Page {index}", "url": f"https://example.test/{index}", "text": "Tuebingen guide" if index % 2 else "unrelated page"}
-                for index in range(20)
-            ]
-            write_jsonl(labels, rows)
-            report = train_model(labels, root / "model.joblib", metrics_path=root / "metrics.json")
-            self.assertEqual(report["examples"], 20)
-            import joblib
-            self.assertIn("text", joblib.load(root / "model.joblib")["feature_fields"])
 
     def test_apply_reviews_updates_matching_final_label(self):
         with tempfile.TemporaryDirectory() as tmp:
