@@ -205,7 +205,7 @@ class LabelStats(BaseModel):
 
 
 class PipelineRequest(BaseModel):
-    action: Literal["search", "fetch", "label", "apply-reviews", "train-page", "train-link"]
+    action: Literal["search", "fetch", "label", "apply-reviews"]
     limit: int | None = Field(default=None, ge=1, le=10000)
     workers: int | None = Field(default=None, ge=1, le=32)
     model: str | None = None
@@ -255,8 +255,12 @@ def pipeline_status() -> dict[str, object]:
             "snapshots": _line_count(ROOT_DIR / "data" / "page_snapshots.jsonl"),
             "teacher_labels": _line_count(ROOT_DIR / "data" / "teacher_labels.raw.jsonl"),
             "reviewed_labels": _line_count(ROOT_DIR / "data" / "labels.reviewed.jsonl"),
-            "page_model": (ROOT_DIR / "data" / "models" / "page_verdict.joblib").exists(),
-            "link_model": (ROOT_DIR / "data" / "models" / "link_verdict.joblib").exists(),
+            "page_model": (
+                ROOT_DIR / "data" / "release" / "models" / "page_verdict.joblib"
+            ).exists(),
+            "link_model": (
+                ROOT_DIR / "data" / "release" / "models" / "link_verdict.joblib"
+            ).exists(),
         },
     }
 
@@ -316,20 +320,6 @@ def _pipeline_command(payload: PipelineRequest) -> list[str]:
                 command += ["--model", payload.model]
         case "apply-reviews":
             command += ["apply-reviews"]
-        case "train-page":
-            command += [
-                "train",
-                "--labels",
-                "data/labels.final.jsonl",
-                "--out",
-                "data/models/page_verdict.joblib",
-                "--metrics",
-                "data/models/page_metrics.json",
-            ]
-        case "train-link":
-            command += ["train-link"]
-            if payload.crawl_db:
-                command += ["--crawl-db", payload.crawl_db]
     return command
 
 
@@ -1528,7 +1518,16 @@ def import_review_batch(payload: ReviewImportRequest) -> dict[str, object]:
     if not path.is_file():
         raise HTTPException(status_code=404, detail=f"review_batch_not_found: {path}")
     try:
-        items = [review_item(row) for row in read_records(path)]
+        reviewed_path = ROOT_DIR / "data" / "labels.reviewed.jsonl"
+        reviewed = {
+            str(row.get("id") or row.get("text_hash") or "")
+            for row in read_records(reviewed_path)
+        } if reviewed_path.is_file() else set()
+        items = [
+            review_item(row)
+            for row in read_records(path)
+            if str(row.get("id") or row.get("text_hash") or "") not in reviewed
+        ]
     except (ValueError, json.JSONDecodeError) as exc:
         raise HTTPException(status_code=400, detail=f"invalid_review_batch: {exc}") from exc
     return {"path": str(path), "rows_read": len(items), "results": items}

@@ -22,15 +22,16 @@
 
       <section id="review" hidden>
         <p><label>Review <select id="candidate-mode"><option value="pages">Page candidates</option><option value="links">Link candidates</option><option value="teacher">Teacher batches</option></select></label> <button id="load-review" type="button">Load next</button></p>
+        <p><label>Batch <input id="review-path" value="data/link_review/link_holdout_v1.jsonl" /></label></p>
         <div id="item">No item loaded.</div>
       </section>
 
       <section id="evaluate" hidden>
         <p><label>Snapshot <input id="snapshot" placeholder="data/benchmarks/run/features.jsonl" /></label></p>
         <p><label>Baseline page <input id="baseline-page" value="../search-engine/verdict-ml/artifacts/page_verdict_handlabeled.joblib" /></label></p>
-        <p><label>Candidate page <input id="candidate-page" value="data/models/page_verdict.joblib" /></label></p>
+        <p><label>Candidate page <input id="candidate-page" value="data/release/models/page_verdict.joblib" /></label></p>
         <p><label>Baseline link <input id="baseline-link" value="../search-engine/verdict-ml/artifacts/link_verdict.joblib" /></label></p>
-        <p><label>Candidate link <input id="candidate-link" value="data/models/link_verdict.joblib" /></label></p>
+        <p><label>Candidate link <input id="candidate-link" value="data/release/models/link_verdict.joblib" /></label></p>
         <p><button id="evaluate-run" type="button">Replay and create review queue</button> <button id="live-smoke" type="button">Run live smoke</button></p>
         <div id="evaluation">No comparison run.</div>
         <div id="queue"></div>

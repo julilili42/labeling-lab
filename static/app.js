@@ -2,6 +2,8 @@ const $ = (selector) => document.querySelector(selector)
 const status = $("#status")
 let current = null
 let queue = []
+let reviewBatch = []
+let reviewPath = ""
 
 async function api(url, options) {
   const response = await fetch(url, options)
@@ -11,6 +13,43 @@ async function api(url, options) {
 
 function show(tab) {
   for (const section of document.querySelectorAll("main > section")) section.hidden = section.id !== tab
+}
+
+function renderItem(item) {
+  const container = $("#item")
+  container.replaceChildren()
+  if (!item) {
+    container.textContent = "No items."
+    return
+  }
+
+  const url = item.target_url || item.url
+  const parsedUrl = URL.canParse(url) ? new URL(url) : null
+  if (parsedUrl && ["http:", "https:"].includes(parsedUrl.protocol)) {
+    const link = document.createElement("a")
+    link.href = parsedUrl.href
+    link.target = "_blank"
+    link.rel = "noreferrer"
+    link.textContent = url
+    container.append(link)
+  } else {
+    container.append(url)
+  }
+
+  for (const text of [item.anchor || item.title || "", item.snippet || ""]) {
+    const paragraph = document.createElement("p")
+    paragraph.textContent = text
+    container.append(paragraph)
+  }
+
+  const ratings = document.createElement("p")
+  for (const rating of [1, 2, 3, 4, 5]) {
+    const button = document.createElement("button")
+    button.dataset.rating = rating
+    button.textContent = rating
+    ratings.append(button)
+  }
+  container.append(ratings)
 }
 
 document.querySelectorAll("[data-tab]").forEach((button) => button.onclick = () => show(button.dataset.tab))
@@ -23,21 +62,33 @@ document.querySelectorAll("[data-pipeline]").forEach((button) => button.onclick 
 
 $("#load-review").onclick = async () => {
   const mode = $("#candidate-mode").value
-  const endpoint = mode === "links" ? "/api/link-candidates?limit=1" : mode === "teacher" ? null : "/api/crawler-candidates?limit=1"
-  if (!endpoint) { status.textContent = "Load a teacher batch from Data files first."; return }
   try {
-    const [item] = await api(endpoint)
+    let item
+    if (mode === "teacher") {
+      const path = $("#review-path").value
+      if (path !== reviewPath) {
+        const result = await api("/api/import/review-batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path }) })
+        reviewBatch = result.results
+        reviewPath = path
+      }
+      item = reviewBatch.shift()
+    } else {
+      const endpoint = mode === "links" ? "/api/link-candidates?limit=1" : "/api/crawler-candidates?limit=1"
+      ;[item] = await api(endpoint)
+    }
     current = item || null
-    $("#item").innerHTML = !item ? "No items." : `<a href="${item.target_url || item.url}" target="_blank" rel="noreferrer">${item.target_url || item.url}</a><p>${item.anchor || item.title || ""}</p><p>${item.snippet || ""}</p><p>${[1,2,3,4,5].map((rating) => `<button data-rating="${rating}">${rating}</button>`).join("")}</p>`
+    renderItem(item)
   } catch (error) { status.textContent = error.message }
 }
 
 $("#item").onclick = async (event) => {
   const button = event.target.closest("[data-rating]")
   if (!button || !current) return
-  const link = $("#candidate-mode").value === "links"
+  const mode = $("#candidate-mode").value
   try {
-    await api(link ? "/api/link-rating" : "/api/rating", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(link ? { link_id: current.id, rating: Number(button.dataset.rating) } : { result_id: current.id, rating: Number(button.dataset.rating) }) })
+    const endpoint = mode === "teacher" ? "/api/review-rating" : mode === "links" ? "/api/link-rating" : "/api/rating"
+    const body = mode === "teacher" ? { item: current, rating: Number(button.dataset.rating), notes: "" } : mode === "links" ? { link_id: current.id, rating: Number(button.dataset.rating) } : { result_id: current.id, rating: Number(button.dataset.rating) }
+    await api(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
     $("#load-review").click()
   } catch (error) { status.textContent = error.message }
 }

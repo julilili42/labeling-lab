@@ -1,6 +1,9 @@
 import json
 import sqlite3
+from pathlib import Path
 
+from fastapi.testclient import TestClient
+import labeling_lab.server as server
 from labeling_lab.server import (
     PipelineRequest,
     _pipeline_command,
@@ -148,14 +151,25 @@ def test_teacher_review_item_uses_snapshot_text_when_no_snippet():
     assert item["rating"] is None
 
 
-def test_page_training_ui_uses_the_release_dataset():
-    command = _pipeline_command(PipelineRequest(action="train-page"))
+def test_ui_imports_and_rates_teacher_review_batches():
+    script = (Path(__file__).parents[1] / "static/app.js").read_text()
 
-    assert command[-6:] == [
-        "--labels",
-        "data/labels.final.jsonl",
-        "--out",
-        "data/models/page_verdict.joblib",
-        "--metrics",
-        "data/models/page_metrics.json",
-    ]
+    assert "/api/import/review-batch" in script
+    assert "/api/review-rating" in script
+
+
+def test_review_batch_import_resumes_after_existing_ratings(tmp_path, monkeypatch):
+    (tmp_path / "data").mkdir()
+    batch = tmp_path / "batch.jsonl"
+    batch.write_text('{"id":"done"}\n{"id":"pending"}\n', encoding="utf-8")
+    (tmp_path / "data" / "labels.reviewed.jsonl").write_text(
+        '{"id":"done","label":"positive"}\n', encoding="utf-8"
+    )
+    monkeypatch.setattr(server, "ROOT_DIR", tmp_path)
+
+    response = TestClient(server.app).post(
+        "/api/import/review-batch", json={"path": "batch.jsonl"}
+    )
+
+    assert response.status_code == 200
+    assert [row["id"] for row in response.json()["results"]] == ["pending"]
