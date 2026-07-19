@@ -291,3 +291,95 @@ queries, URLs, or text hashes.
 Consequences:
 The files may contain raw SERP duplicates, but `fetch` already dedupes by URL.
 This keeps the pipeline simple and credit-safe without adding a database.
+
+## ADR-0018: Discover new crawl domains from labeled SERP pages
+
+Date: 2026-07-15
+Status: accepted
+
+Context:
+The crawler's own link graph had exhausted almost all unknown, high-scoring
+domains. Lowering the PageVerdict threshold admitted too many low-quality pages.
+
+Decision:
+Use all configured crawler seed hosts as the known-domain set, then rank
+unknown hosts from local-teacher-positive SERP pages by independent query
+coverage. Social, booking, and route portals are excluded before review.
+
+Consequences:
+New domains enter a small pilot before production seeds. Discovery stays
+reproducible and does not weaken the page-quality threshold.
+
+## ADR-0019: One frozen release pipeline for both verdict models
+
+Date: 2026-07-18
+Status: accepted
+
+Context:
+Independent page and link trainers used different splitting, threshold, and
+evaluation rules. Duplicate pages leaked into validation and old crawl outcomes
+acted as circular LinkVerdict labels.
+
+Decision:
+Use `training.toml` and `train-models` as the only supported training path.
+Deduplicate before splitting, keep destination hosts disjoint, select model
+regularization by grouped training CV, select the threshold on validation, and
+reserve test for the central benchmark.
+
+Consequences:
+Every release has content hashes, identical report tables, and directly
+comparable PageVerdict and LinkVerdict artifacts. Historical trainers are gone.
+
+## ADR-0020: Treat teacher labels as versioned weak supervision
+
+Date: 2026-07-18
+Status: accepted
+
+Decision:
+Require one prompt version per dataset, hash prompt text in new labels and cache
+keys, and reject resume into a file produced by another prompt or model.
+
+Consequences:
+Prompt changes can no longer silently reuse cache entries or mix label policies.
+A human-reviewed benchmark remains required for production-quality claims.
+
+The first clean LinkVerdict release uses the 2,699-example `teacher_r4_final`
+link-v2 run rather than a much smaller partial link-v4 rerun. An overlap audit
+found 153 of 159 decisions unchanged; the release manifest keeps that older
+prompt version explicit.
+
+## ADR-0021: Reconstruct page-v4 labels after stale-field overwrite
+
+Date: 2026-07-18
+Status: accepted
+
+Context:
+Relabeling merged the old snapshot after the new teacher response. Existing
+`label` and boolean fields therefore overwrote 629 fresh page-v4 decisions.
+
+Decision:
+Reverse the merge order and reconstruct `data/page_v4_labels_clean.jsonl` from
+the saved raw teacher responses plus their original snapshots.
+
+Consequences:
+No teacher calls were repeated, and the training input now represents the
+actual page-v4 response. The reconstructed rows retain their original source.
+
+## ADR-0022: Use reviewed additions without changing frozen holdouts
+
+Date: 2026-07-19
+Status: accepted
+
+Context:
+Link teacher audits did not provide reliable human-ground-truth quality, while
+the PageVerdict crawl exposed new, manually reviewed boundary cases.
+
+Decision:
+Train LinkVerdict only from binary human reviews. Add reviewed PageVerdict hard
+negatives as training-only examples whenever their host is absent from the
+frozen validation and test splits.
+
+Consequences:
+New supervision improves training coverage without changing either holdout.
+Teacher-only LinkVerdict data remains archived rather than silently mixed with
+human labels.

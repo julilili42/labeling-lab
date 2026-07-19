@@ -4,5 +4,6 @@ __pycache__/
 .env
 *.sqlite
 .DS_Store
+/indexed_docs.jsonl
 data/**
 !data/queries.txt
