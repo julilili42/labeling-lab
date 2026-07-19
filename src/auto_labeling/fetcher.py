@@ -20,6 +20,7 @@ class PageTextParser(HTMLParser):
         self.description = ""
         self.h1 = ""
         self.h2: list[str] = []
+        self.html_lang = ""
         self.text_parts: list[str] = []
         self._skip_depth = 0
         self._tag_stack: list[str] = []
@@ -29,6 +30,8 @@ class PageTextParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag = tag.lower()
+        if tag == "html":
+            self.html_lang = dict(attrs).get("lang") or ""
         if tag in {"script", "style", "noscript", "svg"}:
             self._skip_depth += 1
         self._tag_stack.append(tag)
@@ -86,6 +89,7 @@ def parse_html(html: str) -> dict[str, object]:
         "description": collapse_space(parser.description),
         "h1": collapse_space(parser.h1),
         "h2": [collapse_space(item) for item in parser.h2 if collapse_space(item)],
+        "html_lang": parser.html_lang.strip().lower(),
         "text": text,
         "text_hash": normalized_text_hash(text),
     }
