@@ -1,0 +1,20 @@
+{
+  "examples": 147,
+  "models": {
+    "human_only": {
+      "average_precision": 0.7300508917381406,
+      "balanced_accuracy": 0.624025974025974,
+      "f1": 0.5985401459854015,
+      "roc_auc": 0.7194805194805195,
+      "threshold": 0.5620196550547198
+    },
+    "qwen_human": {
+      "average_precision": 0.720155118875928,
+      "balanced_accuracy": 0.6922077922077923,
+      "f1": 0.7088607594936709,
+      "roc_auc": 0.7736549165120594,
+      "threshold": 0.40090708816674747
+    }
+  },
+  "positives": 70
+}

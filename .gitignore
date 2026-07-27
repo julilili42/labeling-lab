@@ -7,3 +7,5 @@ __pycache__/
 /indexed_docs.jsonl
 data/**
 !data/queries.txt
+!data/final/
+!data/final/**

@@ -1,0 +1,160 @@
+{
+  "bootstrap_samples": 1000,
+  "bootstrap_unit": "host",
+  "release_manifest_sha256": "ae9d7e34806ff33a04f6022446dd1013f493af6711546d8678d7d220945c59a1",
+  "schema_version": 1,
+  "tasks": {
+    "link": {
+      "confidence_intervals_95": {
+        "accuracy": {
+          "lower": 0.6929260450160771,
+          "upper": 0.7913385826771654
+        },
+        "average_precision": {
+          "lower": 0.4697520424802398,
+          "upper": 0.7563845896551892
+        },
+        "balanced_accuracy": {
+          "lower": 0.6907051282051282,
+          "upper": 0.812538427755819
+        },
+        "brier_score": {
+          "lower": 0.12236168082498203,
+          "upper": 0.1916589658890038
+        },
+        "f1": {
+          "lower": 0.524822695035461,
+          "upper": 0.7071428571428572
+        },
+        "log_loss": {
+          "lower": 0.3831181960694543,
+          "upper": 0.5774254815474573
+        },
+        "matthews_correlation": {
+          "lower": 0.34836968550457914,
+          "upper": 0.5636313213432322
+        },
+        "precision": {
+          "lower": 0.4114285714285714,
+          "upper": 0.6306306306306306
+        },
+        "recall": {
+          "lower": 0.6568047337278107,
+          "upper": 0.8805970149253731
+        },
+        "roc_auc": {
+          "lower": 0.7561184157457449,
+          "upper": 0.8912631578947368
+        },
+        "threshold": {
+          "lower": 0.36029287623221967,
+          "upper": 0.36029287623221967
+        }
+      },
+      "groups": 262,
+      "metrics": {
+        "accuracy": 0.7380952380952381,
+        "average_precision": 0.6274704590163023,
+        "balanced_accuracy": 0.7463134542607334,
+        "brier_score": 0.15968569727011941,
+        "confusion_matrix": [
+          [
+            282,
+            106
+          ],
+          [
+            37,
+            121
+          ]
+        ],
+        "examples": 546,
+        "f1": 0.6285714285714286,
+        "log_loss": 0.4871661588744593,
+        "matthews_correlation": 0.4532671722689653,
+        "positives": 158,
+        "precision": 0.5330396475770925,
+        "recall": 0.7658227848101266,
+        "roc_auc": 0.82187132976641,
+        "threshold": 0.36029287623221967
+      },
+      "model_sha256": "cd18947086b31bc91d7a688d48110cbfcee7b25a1d08547d126e841e063287dc",
+      "test_dataset_sha256": "7dc13eafd3489d9bfb0f80ad809557a7f2b19c194c56aaf6b2078f2b3fec25ca"
+    },
+    "page": {
+      "confidence_intervals_95": {
+        "accuracy": {
+          "lower": 0.6960651289009498,
+          "upper": 0.8449704142011835
+        },
+        "average_precision": {
+          "lower": 0.41896059382828665,
+          "upper": 0.7320023516707728
+        },
+        "balanced_accuracy": {
+          "lower": 0.7604306487695749,
+          "upper": 0.8550165071904203
+        },
+        "brier_score": {
+          "lower": 0.1347029298632938,
+          "upper": 0.21916377446757443
+        },
+        "f1": {
+          "lower": 0.5391705069124424,
+          "upper": 0.8772542175683536
+        },
+        "log_loss": {
+          "lower": 0.4327012836866531,
+          "upper": 0.6205493594825771
+        },
+        "matthews_correlation": {
+          "lower": 0.430356503343117,
+          "upper": 0.708225438511251
+        },
+        "precision": {
+          "lower": 0.3885135135135135,
+          "upper": 0.792016806722689
+        },
+        "recall": {
+          "lower": 0.851063829787234,
+          "upper": 0.9869621903520208
+        },
+        "roc_auc": {
+          "lower": 0.6979278473464521,
+          "upper": 0.8808640065986184
+        },
+        "threshold": {
+          "lower": 0.40090708816674747,
+          "upper": 0.40090708816674747
+        }
+      },
+      "groups": 328,
+      "metrics": {
+        "accuracy": 0.7868480725623582,
+        "average_precision": 0.5758690949634804,
+        "balanced_accuracy": 0.8172102669072692,
+        "brier_score": 0.18550461413923405,
+        "confusion_matrix": [
+          [
+            361,
+            174
+          ],
+          [
+            14,
+            333
+          ]
+        ],
+        "examples": 882,
+        "f1": 0.7798594847775175,
+        "log_loss": 0.5455913864143687,
+        "matthews_correlation": 0.6269014089321414,
+        "positives": 347,
+        "precision": 0.6568047337278107,
+        "recall": 0.9596541786743515,
+        "roc_auc": 0.7800910339626707,
+        "threshold": 0.40090708816674747
+      },
+      "model_sha256": "70eeb5dd7798b6bf452f6d75bee55b710370b7ff90bf74e13b652128e15bf1b9",
+      "test_dataset_sha256": "e14f95ba5324328174bec983dec86387a9e24ed801b8f5fe35243e4444abaa2e"
+    }
+  }
+}

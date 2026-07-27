@@ -7,8 +7,9 @@ Train two binary student models:
 - PageVerdict decides whether a fetched page belongs in the English Tuebingen index.
 - LinkVerdict estimates before fetching whether a discovered link leads to such a page.
 
-The release is reproducible from `training.toml`. Training data, models, and
-benchmark outputs are content-hashed in `data/release/manifest.json`.
+The training pipeline is configured through `training.toml`. Raw training
+pages are local data and are not included in this repository; the deployed
+models and report evidence are preserved under `data/final/`.
 
 ## Label policy
 
@@ -21,10 +22,9 @@ Teacher labels are weak supervision, not human ground truth. A release may be
 used as a teacher-matching baseline. Claims about real search quality require a
 separate human-reviewed benchmark sampled before inspecting model errors.
 
-The current LinkVerdict release uses only binary human reviews. Earlier teacher
-runs remain archived but do not enter training; repeated release audits showed
-that their agreement with another prompt did not predict human search-quality
-judgements.
+The current LinkVerdict release uses only binary human reviews. Exploratory
+teacher labels did not enter its training because their link-level relevance
+judgements were qualitatively less reliable.
 
 Human-reviewed PageVerdict hard negatives are marked `training_only`. They are
 added only to train and never change the frozen validation or test partitions.
