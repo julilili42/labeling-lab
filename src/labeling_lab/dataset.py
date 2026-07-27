@@ -139,6 +139,35 @@ def build_page_dataset(
     prompt_version = str(section.get("prompt_version") or "")
     label_paths = _source_paths(root, section, "label_files")
     snapshot_paths = _source_paths(root, section, "snapshot_files")
+    review_paths = (
+        _source_paths(root, section, "human_review_files")
+        if section.get("human_review_files")
+        else []
+    )
+    training_sets = {str(value) for value in section.get("human_training_sets", [])}
+    reviews_by_url: dict[str, list[tuple[Path, dict[str, object]]]] = defaultdict(list)
+    for path in review_paths:
+        for review in read_jsonl(path):
+            if review.get("kind") not in {None, "", "page"}:
+                continue
+            review_set = str(review.get("review_set") or "")
+            if review_set and review_set not in training_sets:
+                continue
+            url = normalize_url(review.get("normalized_url") or review.get("url"))
+            label = str(review.get("label") or "")
+            if not url or label not in LABELS:
+                continue
+            reviews_by_url[url].append((path, review))
+    human_labels: dict[str, tuple[str, Path, dict[str, object]]] = {}
+    human_rows: list[tuple[Path, dict[str, object]]] = []
+    conflicting_human_urls = 0
+    for url, reviews in reviews_by_url.items():
+        if len({str(review["label"]) for _, review in reviews}) != 1:
+            conflicting_human_urls += 1
+            continue
+        path, review = reviews[-1]
+        human_labels[url] = (str(review["label"]), path, review)
+        human_rows.append((path, review))
     snapshots_by_hash: dict[str, dict[str, object]] = {}
     snapshots_by_url: dict[str, dict[str, object]] = {}
     for path in snapshot_paths:
@@ -148,67 +177,88 @@ def build_page_dataset(
             text_hash = str(row.get("text_hash") or "")
             url = normalize_url(row.get("normalized_url") or row.get("url"))
             if text_hash:
-                snapshots_by_hash.setdefault(text_hash, row)
+                snapshots_by_hash[text_hash] = row
             if url:
-                snapshots_by_url.setdefault(url, row)
+                snapshots_by_url[url] = row
 
     rows: list[dict[str, object]] = []
-    excluded = Counter()
-    for path in label_paths:
-        for label in read_jsonl(path):
-            if label.get("prompt_version") != prompt_version:
-                excluded["wrong_prompt_version"] += 1
-                continue
-            if label.get("label") not in LABELS:
-                excluded["non_binary_label"] += 1
-                continue
-            if not _valid_teacher_label(label):
-                excluded["inconsistent_teacher_label"] += 1
-                continue
-            url = normalize_url(label.get("normalized_url") or label.get("url"))
-            text_hash = str(label.get("text_hash") or "")
-            snapshot = snapshots_by_hash.get(text_hash) or snapshots_by_url.get(url)
-            if not url or snapshot is None:
-                excluded["missing_snapshot"] += 1
-                continue
-            body = _space(snapshot.get("text"))
-            if not body:
-                excluded["empty_text"] += 1
-                continue
-            content_hash = text_hash or stable_hash(body.lower())
-            fields = {
-                "title": _space(
-                    snapshot.get("title") or snapshot.get("serp_title") or label.get("title")
+    excluded = Counter({"conflicting_human_url": conflicting_human_urls})
+    label_rows = [
+        (path, label, False)
+        for path in label_paths
+        for label in read_jsonl(path)
+    ]
+    label_rows.extend((path, review, True) for path, review in human_rows)
+    for path, label, human_review in label_rows:
+        if not human_review and label.get("prompt_version") != prompt_version:
+            excluded["wrong_prompt_version"] += 1
+            continue
+        if label.get("label") not in LABELS:
+            excluded["non_binary_label"] += 1
+            continue
+        if not human_review and not _valid_teacher_label(label):
+            excluded["inconsistent_teacher_label"] += 1
+            continue
+        url = normalize_url(label.get("normalized_url") or label.get("url"))
+        text_hash = str(label.get("text_hash") or "")
+        snapshot = (
+            snapshots_by_url.get(url)
+            if url in human_labels
+            else snapshots_by_hash.get(text_hash) or snapshots_by_url.get(url)
+        )
+        if not url or snapshot is None:
+            excluded["missing_snapshot"] += 1
+            continue
+        body = _space(snapshot.get("text"))
+        if not body:
+            excluded["empty_text"] += 1
+            continue
+        content_hash = text_hash or stable_hash(body.lower())
+        fields = {
+            "title": _space(
+                snapshot.get("title") or snapshot.get("serp_title") or label.get("title")
+            ),
+            "url": str(snapshot.get("url") or label.get("url") or url),
+            "display_url": _display_url(str(snapshot.get("url") or label.get("url") or url)),
+            "snippet": _page_snippet(snapshot),
+            "text": body[:3000],
+        }
+        group = host_from_url(url)
+        if not group:
+            excluded["missing_host"] += 1
+            continue
+        original_label = str(label["label"])
+        reviewed = human_labels.get(url)
+        final_label = reviewed[0] if reviewed else original_label
+        if reviewed and final_label != original_label:
+            excluded["human_review_relabels"] += 1
+        rows.append(
+            {
+                "id": stable_hash(["page", url, content_hash])[:20],
+                "task": "page",
+                "label": final_label,
+                "original_label": original_label,
+                "label_correction": "human_review" if final_label != original_label else "",
+                "label_source": "human" if reviewed else "teacher",
+                "group": group,
+                "url": url,
+                "source": str((reviewed[1] if reviewed else path).relative_to(root)),
+                "prompt_version": prompt_version,
+                "prompt_sha256": str(label.get("prompt_sha256") or ""),
+                "teacher": "" if reviewed else str(label.get("teacher") or ""),
+                "teacher_model": "" if reviewed else str(label.get("model") or ""),
+                "confidence": 1.0 if reviewed else float(label.get("confidence") or 0.0),
+                **(
+                    {"training_only": True}
+                    if label.get("training_only") or reviewed and reviewed[2].get("training_only")
+                    else {}
                 ),
-                "url": str(snapshot.get("url") or label.get("url") or url),
-                "display_url": _display_url(str(snapshot.get("url") or label.get("url") or url)),
-                "snippet": _page_snippet(snapshot),
-                "text": body[:3000],
+                "text": page_text(fields),
+                "identity": url,
+                "content_key": content_hash,
+                "completeness": sum(bool(fields[key]) for key in fields),
             }
-            group = host_from_url(url)
-            if not group:
-                excluded["missing_host"] += 1
-                continue
-            rows.append(
-                {
-                    "id": stable_hash(["page", url, content_hash])[:20],
-                    "task": "page",
-                    "label": label["label"],
-                    "group": group,
-                    "url": url,
-                    "source": str(label.get("source_file") or path.relative_to(root)),
-                    "prompt_version": prompt_version,
-                    "prompt_sha256": str(label.get("prompt_sha256") or ""),
-                    "teacher": str(label.get("teacher") or ""),
-                    "teacher_model": str(label.get("model") or ""),
-                    "confidence": float(label.get("confidence") or 0.0),
-                    **({"training_only": True} if label.get("training_only") else {}),
-                    "text": page_text(fields),
-                    "identity": url,
-                    "content_key": content_hash,
-                    "completeness": sum(bool(fields[key]) for key in fields),
-                }
-            )
+        )
     deduped, dedupe_counts = _dedupe(rows, identity_key="identity", content_key="content_key")
     excluded.update(dedupe_counts)
     return deduped, dict(excluded)
@@ -463,7 +513,7 @@ def prepare(config_path: Path) -> Path:
             raise ValueError(f"Missing [{task}] section")
         if task != "link" or section.get("use_teacher_labels", True):
             inputs.extend(_source_paths(root, section, "label_files"))
-        if task == "link" and section.get("human_review_files"):
+        if section.get("human_review_files"):
             inputs.extend(_source_paths(root, section, "human_review_files"))
         if task == "page":
             inputs.extend(_source_paths(root, section, "snapshot_files"))

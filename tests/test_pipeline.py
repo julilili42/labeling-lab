@@ -1,7 +1,13 @@
 import json
 from pathlib import Path
 
-from labeling_lab.dataset import build_link_dataset, prepare, read_jsonl, split_dataset
+from labeling_lab.dataset import (
+    build_link_dataset,
+    build_page_dataset,
+    prepare,
+    read_jsonl,
+    split_dataset,
+)
 from labeling_lab.release_benchmark import benchmark_release
 from labeling_lab.training import train_release
 
@@ -174,6 +180,59 @@ def test_link_dataset_can_use_only_human_reviews(tmp_path):
     assert len(rows) == 1
     assert rows[0]["label"] == "positive"
     assert rows[0]["label_source"] == "human"
+
+
+def test_page_human_reviews_override_teacher_and_join_snapshots(tmp_path):
+    _write(
+        tmp_path / "labels.jsonl",
+        [{
+            "url": "https://example.test/teacher",
+            "text_hash": "teacher-hash",
+            "prompt_version": "page-test",
+            "label": "negative",
+        }],
+    )
+    _write(
+        tmp_path / "snapshots.jsonl",
+        [
+            {"url": "https://example.test/teacher", "text_hash": "teacher-hash", "text": "Teacher page"},
+            {"url": "https://example.test/teacher", "text_hash": "current-hash", "text": "Current page"},
+            {"url": "https://human.test/only", "text_hash": "human-hash", "text": "Human page"},
+        ],
+    )
+    _write(
+        tmp_path / "reviews.jsonl",
+        [
+            {"url": "https://example.test/teacher", "label": "positive"},
+            {"url": "https://human.test/only", "label": "positive"},
+            {"kind": "link", "url": "https://ignored.test", "label": "positive"},
+            {"kind": "page", "review_set": "held-out", "url": "https://held.test", "label": "positive"},
+            {"url": "https://conflict.test", "label": "positive"},
+            {"url": "https://conflict.test", "label": "negative"},
+        ],
+    )
+
+    rows, excluded = build_page_dataset(
+        tmp_path,
+        {
+            "prompt_version": "page-test",
+            "label_files": ["labels.jsonl"],
+            "snapshot_files": ["snapshots.jsonl"],
+            "human_review_files": ["reviews.jsonl"],
+            "human_training_sets": ["training"],
+        },
+    )
+
+    assert {(row["url"], row["label"]) for row in rows} == {
+        ("https://example.test/teacher", "positive"),
+        ("https://human.test/only", "positive"),
+    }
+    assert {row["label_source"] for row in rows} == {"human"}
+    assert "text: Current page" in next(
+        row["text"] for row in rows if row["url"] == "https://example.test/teacher"
+    )
+    assert excluded["human_review_relabels"] == 1
+    assert excluded["conflicting_human_url"] == 1
 
 
 def test_training_only_rows_cannot_change_validation_or_test():

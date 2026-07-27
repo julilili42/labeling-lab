@@ -2,6 +2,7 @@ schema_version = 1
 random_seed = 20260718
 output_dir = "data/release"
 
+# Raw inputs are local and intentionally not committed.
 [page]
 prompt_version = "page-v4"
 label_files = [
@@ -14,6 +15,18 @@ snapshot_files = [
   "data/holdout_v3_input.jsonl",
   "data/train_v4_snapshots.jsonl",
   "data/page_hard_negatives_20260719/snapshots.jsonl",
+  "data/page_human_v1/snapshots.jsonl",
+  "data/page_boundary_001/snapshots.jsonl",
+  "data/page_boundary_001/fresh_snapshots.jsonl",
+  "data/page_qwen_disagreement_001/snapshots.jsonl",
+]
+human_review_files = [
+  "data/labels.hand.jsonl",
+  "data/labels.reviewed.jsonl",
+]
+human_training_sets = [
+  "page-boundary-001-train",
+  "page-qwen-disagreement-001-train",
 ]
 
 [link]
@@ -28,4 +41,12 @@ human_training_sets = [
   "link-release-audit-v3",
   "link-release-audit-v4",
   "link-targeted-r2",
+  "link-mixed-001-train",
+  "link-positive-001-train",
+  "link-wikipedia-001",
+  "link-wikipedia-002",
+  "link-disagreement-001-train",
+  "link-positive-002-train",
+  "link-wikipedia-004-train",
+  "link-disagreement-002-train",
 ]
