@@ -160,15 +160,9 @@ def cmd_fetch(args: argparse.Namespace) -> None:
     if not args.resume:
         write_jsonl(args.out, [])
     snapshots = existing[:]
-    text_hashes = {str(row.get("text_hash") or "") for row in existing if row.get("text_hash")}
     # ponytail: no per-host politeness cap; add per-host semaphores if a site rate-limits us
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for snapshot in pool.map(lambda row: fetch_snapshot(row, timeout=args.timeout), to_fetch):
-            text_hash = str(snapshot.get("text_hash") or "")
-            if text_hash and text_hash in text_hashes:
-                continue
-            if text_hash:
-                text_hashes.add(text_hash)
             snapshots.append(snapshot)
             append_jsonl(args.out, snapshot)
     ok = sum(1 for row in snapshots if not row.get("fetch_error"))

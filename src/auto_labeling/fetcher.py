@@ -103,7 +103,7 @@ def _charset(content_type: str) -> str:
 def fetch_snapshot(row: dict[str, object], *, timeout: int = 15) -> dict[str, object]:
     url = str(row.get("url") or "")
     normalized = str(row.get("normalized_url") or normalize_url(url))
-    request = Request(url, headers={"User-Agent": USER_AGENT})
+    request = Request(url, headers={"Accept-Language": "en", "User-Agent": USER_AGENT})
     base = {
         "url": url,
         "normalized_url": normalized,
