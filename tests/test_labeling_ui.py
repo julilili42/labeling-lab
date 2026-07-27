@@ -153,9 +153,13 @@ def test_teacher_review_item_uses_snapshot_text_when_no_snippet():
 
 def test_ui_imports_and_rates_teacher_review_batches():
     script = (Path(__file__).parents[1] / "static/app.js").read_text()
+    page = (Path(__file__).parents[1] / "static/index.html").read_text()
 
     assert "/api/import/review-batch" in script
     assert "/api/review-rating" in script
+    assert "reviewBatch.length + Number(Boolean(current))" in script
+    assert 'id="review-counter"' in page
+    assert '/static/app.js?v=2' in page
 
 
 def test_review_batch_import_resumes_after_existing_ratings(tmp_path, monkeypatch):

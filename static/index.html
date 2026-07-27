@@ -12,7 +12,6 @@
       <nav aria-label="Sections">
         <button data-tab="data" type="button">Data</button>
         <button data-tab="review" type="button">Review</button>
-        <button data-tab="evaluate" type="button">Evaluate</button>
       </nav>
 
       <section id="data">
@@ -21,24 +20,12 @@
       </section>
 
       <section id="review" hidden>
-        <p><label>Review <select id="candidate-mode"><option value="pages">Page candidates</option><option value="links">Link candidates</option><option value="teacher">Teacher batches</option></select></label> <button id="load-review" type="button">Load next</button></p>
-        <p><label>Batch <input id="review-path" value="data/link_review/link_holdout_v1.jsonl" /></label></p>
+        <p><label>Review <select id="candidate-mode"><option value="teacher">JSONL batch</option><option value="pages">Page candidates</option><option value="links">Link candidates</option></select></label> <button id="load-review" type="button">Load next</button> <strong id="review-counter" aria-live="polite"></strong></p>
+        <p><label>Batch <input id="review-path" value="data/final/evaluation/page/candidates.jsonl" /></label></p>
         <div id="item">No item loaded.</div>
-      </section>
-
-      <section id="evaluate" hidden>
-        <p><label>Snapshot <input id="snapshot" placeholder="data/benchmarks/run/features.jsonl" /></label></p>
-        <p><label>Baseline page <input id="baseline-page" value="../search-engine/verdict-ml/artifacts/page_verdict_handlabeled.joblib" /></label></p>
-        <p><label>Candidate page <input id="candidate-page" value="data/release/models/page_verdict.joblib" /></label></p>
-        <p><label>Baseline link <input id="baseline-link" value="../search-engine/verdict-ml/artifacts/link_verdict.joblib" /></label></p>
-        <p><label>Candidate link <input id="candidate-link" value="data/release/models/link_verdict.joblib" /></label></p>
-        <p><button id="evaluate-run" type="button">Replay and create review queue</button> <button id="live-smoke" type="button">Run live smoke</button></p>
-        <div id="evaluation">No comparison run.</div>
-        <div id="queue"></div>
-        <p id="decision" hidden>Human decision: <button data-decision="keep_baseline">Keep baseline</button> <button data-decision="release_candidate">Release candidate</button> <button data-decision="needs_more_review">More review</button></p>
       </section>
       <p id="status" role="status"></p>
     </main>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=2"></script>
   </body>
 </html>

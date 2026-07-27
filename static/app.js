@@ -1,9 +1,13 @@
 const $ = (selector) => document.querySelector(selector)
 const status = $("#status")
 let current = null
-let queue = []
 let reviewBatch = []
 let reviewPath = ""
+
+function updateReviewCounter() {
+  const teacher = $("#candidate-mode").value === "teacher"
+  $("#review-counter").textContent = teacher && reviewPath ? `${reviewBatch.length + Number(Boolean(current))} remaining` : ""
+}
 
 async function api(url, options) {
   const response = await fetch(url, options)
@@ -78,8 +82,11 @@ $("#load-review").onclick = async () => {
     }
     current = item || null
     renderItem(item)
+    updateReviewCounter()
   } catch (error) { status.textContent = error.message }
 }
+
+$("#candidate-mode").onchange = updateReviewCounter
 
 $("#item").onclick = async (event) => {
   const button = event.target.closest("[data-rating]")
@@ -91,51 +98,6 @@ $("#item").onclick = async (event) => {
     await api(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
     $("#load-review").click()
   } catch (error) { status.textContent = error.message }
-}
-
-$("#evaluate-run").onclick = async () => {
-  const snapshot = $("#snapshot").value
-  try {
-    const result = await api("/api/evaluate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ snapshot, baseline_page: $("#baseline-page").value, candidate_page: $("#candidate-page").value, baseline_link: $("#baseline-link").value, candidate_link: $("#candidate-link").value }) })
-    $("#evaluation").textContent = JSON.stringify(result.report, null, 2)
-    const report = document.createElement("a")
-    report.href = `/api/evaluate/report?snapshot=${encodeURIComponent(snapshot)}`
-    report.textContent = "Open report"
-    $("#evaluation").append(" ", report)
-    queue = result.queue || []
-    renderQueue()
-    $("#decision").hidden = false
-  } catch (error) { status.textContent = error.message }
-}
-
-function renderQueue() {
-  const item = queue.find((entry) => !entry.rated)
-  $("#queue").textContent = item ? `Review queue: ${queue.filter((entry) => entry.rated).length}/${queue.length}. ${item.kind}: ${item.item.target_url || item.item.url || ""}` : `Review queue: ${queue.length}/${queue.length}.`
-  if (!item) return
-  for (const rating of [1, 2, 3, 4, 5]) {
-    const button = document.createElement("button")
-    button.textContent = rating
-    button.onclick = async () => {
-      try {
-        await api("/api/evaluate/rating", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ snapshot: $("#snapshot").value, item_id: item.id, rating }) })
-        item.rated = true; renderQueue()
-      } catch (error) { status.textContent = error.message }
-    }
-    $("#queue").append(" ", button)
-  }
-}
-
-$("#live-smoke").onclick = async () => {
-  try {
-    const result = await api("/api/evaluate/live-smoke", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ baseline_page: $("#baseline-page").value, candidate_page: $("#candidate-page").value, baseline_link: $("#baseline-link").value, candidate_link: $("#candidate-link").value }) })
-    status.textContent = `Live smoke: ${result.output}`
-  } catch (error) { status.textContent = error.message }
-}
-
-$("#decision").onclick = async (event) => {
-  const button = event.target.closest("[data-decision]")
-  if (!button) return
-  try { await api("/api/evaluate/decision", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ snapshot: $("#snapshot").value, decision: button.dataset.decision }) }); status.textContent = "Decision recorded. Artifacts were not changed." } catch (error) { status.textContent = error.message }
 }
 
 setInterval(async () => { try { const result = await api("/api/pipeline-status"); $("#pipeline-output").textContent = (result.job.output || ["No job started."]).join("\n") } catch {} }, 1200)

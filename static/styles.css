@@ -1,7 +1,8 @@
-body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #111; font: 16px system-ui, sans-serif; }
+:root { color-scheme: dark; }
+body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #eee; background: #121212; font: 16px system-ui, sans-serif; }
 button, input, select { font: inherit; margin: .2rem; padding: .35rem .5rem; }
 input { width: min(100%, 550px); }
-pre { overflow: auto; padding: .75rem; background: #f4f4f4; }
+pre { overflow: auto; padding: .75rem; background: #1e1e1e; }
 #item { margin-top: 1rem; line-height: 1.5; }
 #item a { overflow-wrap: anywhere; }
 #status { min-height: 1.5em; }
