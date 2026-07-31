@@ -30,8 +30,6 @@ human_training_sets = [
 ]
 
 [link]
-prompt_version = "link-v2"
-use_teacher_labels = false
 human_review_files = ["data/labels.reviewed.jsonl"]
 human_training_sets = [
   "link-human-holdout-v1",

@@ -6,12 +6,18 @@ from auto_labeling.fetcher import parse_html
 from auto_labeling.cli import _resume_rows, cmd_apply_reviews, query_progress
 from auto_labeling.jsonl import read_jsonl, write_jsonl
 from auto_labeling.queries import parse_query_line
-from auto_labeling.teacher import build_link_prompt, label_snapshot, postprocess_label
+from auto_labeling.teacher import PAGE_PROMPT_HASH, label_snapshot, postprocess_label
 from auto_labeling.urls import normalize_url
 from labeling_lab.dataset import page_text
 
 
 class CoreTests(unittest.TestCase):
+    def test_page_prompt_hash_is_frozen(self):
+        self.assertEqual(
+            PAGE_PROMPT_HASH,
+            "b91f9d2e32a8d1a91170d15be35ba14099d2909ba9621f91ec0eaf3ece360c9a",
+        )
+
     def test_parse_query_line_with_count(self):
         spec = parse_query_line("Tuebingen tourism | 50")
         self.assertEqual(spec.query, "Tuebingen tourism")
@@ -80,15 +86,6 @@ class CoreTests(unittest.TestCase):
                 cache_dir=Path(tmp),
             )
             self.assertEqual(label["label"], "positive")
-
-    def test_link_teacher_prompt_includes_discovery_and_destination(self):
-        prompt = build_link_prompt(
-            {"parent_url": "https://parent.test/", "anchor": "Visit", "target_url": "https://target.test/", "target_depth": 2},
-            {"title": "Tuebingen guide", "text": "Useful information"},
-        )
-        self.assertIn("Parent URL: https://parent.test/", prompt)
-        self.assertIn("Anchor: Visit", prompt)
-        self.assertIn("Title: Tuebingen guide", prompt)
 
     def test_jsonl_roundtrip(self):
         with tempfile.TemporaryDirectory() as tmp:

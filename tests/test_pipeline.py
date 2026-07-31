@@ -20,7 +20,7 @@ def _write(path: Path, rows: list[dict[str, object]]) -> None:
 def test_release_pipeline_keeps_hosts_out_of_multiple_splits(tmp_path):
     page_labels = []
     snapshots = []
-    link_labels = []
+    link_reviews = []
     for host_index in range(60):
         label = "positive" if host_index % 3 == 0 else "negative"
         for page_index in range(2):
@@ -50,33 +50,23 @@ def test_release_pipeline_keeps_hosts_out_of_multiple_splits(tmp_path):
                     + text_hash,
                 }
             )
-            link_labels.append(
+            link_reviews.append(
                 {
+                    "review_set": "link-training",
                     "parent_url": f"https://parent-{host_index}.test/",
                     "target_url": url,
                     "target_host": f"host-{host_index}.test",
                     "anchor": "Tuebingen guide" if label == "positive" else "Other",
                     "target_text_hash": text_hash,
-                    "prompt_version": "link-test",
                     "label": label,
                 }
             )
     _write(tmp_path / "page-labels.jsonl", page_labels)
     _write(tmp_path / "snapshots.jsonl", snapshots)
-    _write(tmp_path / "link-labels.jsonl", link_labels)
     _write(
         tmp_path / "human-reviews.jsonl",
         [
-            {
-                "target_text_hash": "page-3-0",
-                "review_set": "link-boundaries",
-                "label": "negative",
-            },
-            {
-                "target_text_hash": "page-2-0",
-                "review_set": "unrelated-holdout",
-                "label": "positive",
-            },
+            *link_reviews,
             {
                 "target_text_hash": "human-only",
                 "review_set": "link-targeted",
@@ -98,11 +88,8 @@ prompt_version = "page-test"
 label_files = ["page-labels.jsonl"]
 snapshot_files = ["snapshots.jsonl"]
 [link]
-prompt_version = "link-test"
-label_files = ["link-labels.jsonl"]
 human_review_files = ["human-reviews.jsonl"]
-human_review_sets = ["link-boundaries"]
-human_training_sets = ["link-targeted"]
+human_training_sets = ["link-training", "link-targeted"]
 positive_threshold = 0.75
 threshold_development_file = "threshold-report.json"
 force_negative_hosts = ["host-0.test"]
@@ -134,14 +121,10 @@ force_negative_hosts = ["host-0.test"]
     assert {row["label"] for row in corrected} == {"negative"}
     assert {row["original_label"] for row in corrected} == {"positive"}
     assert {row["label_correction"] for row in corrected} == {"force_negative_host"}
-    reviewed = [row for row in link_rows if row["url"].endswith("host-3.test/page-0")]
-    assert {row["label"] for row in reviewed} == {"negative"}
-    assert {row["original_label"] for row in reviewed} == {"positive"}
-    assert {row["label_correction"] for row in reviewed} == {"human_review"}
     human_only = [row for row in link_rows if row["group"] == "human-only.test"]
     assert len(human_only) == 1
     assert human_only[0]["label"] == "positive"
-    assert human_only[0]["teacher"] == ""
+    assert human_only[0]["label_source"] == "human"
 
     training = train_release(release)
     assert training["link"]["positive_threshold"] == 0.75
@@ -153,7 +136,7 @@ force_negative_hosts = ["host-0.test"]
     assert (release / "benchmark" / "predictions.csv").is_file()
 
 
-def test_link_dataset_can_use_only_human_reviews(tmp_path):
+def test_link_dataset_uses_human_reviews(tmp_path):
     _write(
         tmp_path / "reviews.jsonl",
         [
@@ -170,8 +153,6 @@ def test_link_dataset_can_use_only_human_reviews(tmp_path):
     rows, _ = build_link_dataset(
         tmp_path,
         {
-            "prompt_version": "link-test",
-            "use_teacher_labels": False,
             "human_review_files": ["reviews.jsonl"],
             "human_training_sets": ["human-training"],
         },

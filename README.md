@@ -3,6 +3,21 @@
 Offline collection, review, training, and evaluation for PageVerdict and
 LinkVerdict.
 
+## Method
+
+PageVerdict combines Qwen-generated weak labels using the frozen
+[`page-v4` prompt](src/auto_labeling/prompts/page-v4.txt) with human reviews;
+LinkVerdict uses binary human judgments only. Ambiguous (`gray`), failed, and
+conflicting labels are excluded, and reviewed PageVerdict labels override the
+teacher.
+
+Exact duplicate URLs and contents are removed before train, validation, and
+test data are split by destination host. Regularization is selected with
+grouped cross-validation on training data, the decision threshold is selected
+on validation data, and the frozen test split is used only for evaluation.
+Human-reviewed hard negatives marked `training_only` can enter training but
+never validation or test.
+
 ## Final artifacts
 
 [`data/final/`](data/final/) contains the deployed models and the manually
@@ -42,12 +57,9 @@ uv run auto-label fetch --resume
 uv run auto-label label --resume
 ```
 
-Teacher labels use local Ollama with `qwen2.5:7b`. Configure local training
+PageVerdict teacher labels use local Ollama with `qwen2.5:7b`. Configure local training
 inputs in [`training.toml`](training.toml), then run:
 
 ```bash
 uv run train-models run
 ```
-
-The data policy, leakage controls, and evaluation procedure are documented in
-[`SPEC.md`](SPEC.md).

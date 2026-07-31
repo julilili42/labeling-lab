@@ -11,11 +11,8 @@ from .queries import read_queries
 from .review import make_review_batch
 from .serper import SERPER_PAGE_SIZE, dedupe_serp_rows, serper_page
 from .teacher import (
-    LINK_PROMPT_HASH,
-    LINK_PROMPT_VERSION,
     PAGE_PROMPT_HASH,
     PROMPT_VERSION,
-    label_link_snapshot,
     label_snapshot,
 )
 from .urls import normalize_url
@@ -205,60 +202,6 @@ def cmd_label(args: argparse.Namespace) -> None:
     print(f"Wrote {len(labels)} labels to {args.out}")
 
 
-def cmd_label_links(args: argparse.Namespace) -> None:
-    snapshots = {
-        normalize_url(str(row.get("normalized_url") or row.get("url") or "")): row
-        for row in read_jsonl(args.snapshots)
-        if not row.get("fetch_error") and row.get("text")
-    }
-    existing = _resume_rows(
-        args.out,
-        resume=args.resume,
-        refresh=args.refresh,
-        prompt_version=LINK_PROMPT_VERSION,
-        prompt_hash=LINK_PROMPT_HASH,
-        teacher=args.teacher,
-        model=args.model,
-    )
-    seen = {
-        (
-            normalize_url(str(row.get("parent_url") or "")),
-            normalize_url(str(row.get("target_url") or row.get("url") or "")),
-            " ".join(str(row.get("anchor") or "").split()),
-        )
-        for row in existing
-    }
-    pairs = []
-    for link in read_jsonl(args.links):
-        target = normalize_url(str(link.get("target_url") or link.get("url") or ""))
-        snapshot = snapshots.get(target)
-        key = (
-            normalize_url(str(link.get("parent_url") or "")),
-            target,
-            " ".join(str(link.get("anchor") or "").split()),
-        )
-        if target and key not in seen and snapshot is not None:
-            seen.add(key)
-            pairs.append((link, snapshot))
-    pairs = pairs[: args.limit]
-    print(f"Labeling {len(pairs)} links with {args.teacher}:{args.model}")
-    if args.dry_run:
-        return
-    if not args.resume:
-        write_jsonl(args.out, [])
-    labels = existing[:]
-    with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        call = lambda pair: label_link_snapshot(
-            pair[0], pair[1], teacher=args.teacher, model=args.model,
-            cache_dir=args.cache_dir, max_chars=args.max_input_chars, refresh=args.refresh,
-            endpoint=args.endpoint,
-        )
-        for label in pool.map(call, pairs):
-            labels.append(label)
-            append_jsonl(args.out, label)
-    print(f"Wrote {len(labels)} link labels to {args.out}")
-
-
 def cmd_make_review_batch(args: argparse.Namespace) -> None:
     path = make_review_batch(args.labels, args.out_dir, batch_size=args.batch_size, reviewed_path=args.reviewed)
     print(f"Wrote review batch {path}")
@@ -336,22 +279,6 @@ def build_parser() -> argparse.ArgumentParser:
     label.add_argument("--refresh", action="store_true")
     label.add_argument("--endpoint", default="http://127.0.0.1:11434/api/generate")
     label.set_defaults(func=cmd_label)
-
-    label_links = sub.add_parser("label-links")
-    label_links.add_argument("--links", type=Path, default=DATA / "link_exploration_sample" / "candidates.jsonl")
-    label_links.add_argument("--snapshots", type=Path, default=DATA / "link_exploration_sample" / "snapshots.jsonl")
-    label_links.add_argument("--out", type=Path, default=DATA / "link_exploration_sample" / "teacher_labels.jsonl")
-    label_links.add_argument("--teacher", choices=["mock", "ollama"], default="ollama")
-    label_links.add_argument("--model", default="qwen2.5:7b")
-    label_links.add_argument("--cache-dir", type=Path, default=DATA / "cache")
-    label_links.add_argument("--limit", type=int, default=100)
-    label_links.add_argument("--max-input-chars", type=int, default=2000)
-    label_links.add_argument("--workers", type=int, default=4)
-    label_links.add_argument("--dry-run", action="store_true")
-    label_links.add_argument("--resume", action="store_true")
-    label_links.add_argument("--refresh", action="store_true")
-    label_links.add_argument("--endpoint", default="http://127.0.0.1:11434/api/generate")
-    label_links.set_defaults(func=cmd_label_links)
 
     batch = sub.add_parser("make-review-batch")
     batch.add_argument("--labels", type=Path, default=DATA / "teacher_labels.raw.jsonl")

@@ -267,70 +267,23 @@ def build_page_dataset(
 def build_link_dataset(
     root: Path, section: dict[str, object]
 ) -> tuple[list[dict[str, object]], dict[str, int]]:
-    prompt_version = str(section.get("prompt_version") or "")
     force_negative_hosts = {
         str(host).lower().removeprefix("www.")
         for host in section.get("force_negative_hosts", [])
     }
-    label_paths = (
-        _source_paths(root, section, "label_files")
-        if section.get("use_teacher_labels", True)
-        else []
-    )
-    review_paths = (
-        _source_paths(root, section, "human_review_files")
-        if section.get("human_review_files")
-        else []
-    )
-    review_sets = {str(value) for value in section.get("human_review_sets", [])}
+    review_paths = _source_paths(root, section, "human_review_files")
     training_sets = {str(value) for value in section.get("human_training_sets", [])}
-    reviews = [
+    label_rows = [
         (path, review)
         for path in review_paths
         for review in read_jsonl(path)
-    ]
-    human_labels: dict[str, str] = {}
-    for _, review in reviews:
-        if review_sets and str(review.get("review_set") or "") not in review_sets:
-            continue
-        content_hash = str(review.get("target_text_hash") or "")
-        label = str(review.get("label") or "")
-        if not content_hash or label not in LABELS:
-            continue
-        if content_hash in human_labels and human_labels[content_hash] != label:
-            raise ValueError(f"Conflicting human reviews for {content_hash}")
-        human_labels[content_hash] = label
-    label_rows = [
-        (path, label)
-        for path in label_paths
-        for label in read_jsonl(path)
-    ]
-    label_rows.extend(
-        (
-            path,
-            {
-                **review,
-                "prompt_version": prompt_version,
-                "confidence": 1.0,
-                "teacher": "",
-                "_human_review": True,
-            },
-        )
-        for path, review in reviews
         if str(review.get("review_set") or "") in training_sets
-        and str(review.get("label") or "") in LABELS
-    )
+    ]
     rows: list[dict[str, object]] = []
     excluded = Counter()
     for path, label in label_rows:
-        if label.get("prompt_version") != prompt_version:
-            excluded["wrong_prompt_version"] += 1
-            continue
         if label.get("label") not in LABELS:
             excluded["non_binary_label"] += 1
-            continue
-        if not _valid_teacher_label(label):
-            excluded["inconsistent_teacher_label"] += 1
             continue
         raw_target_url = str(label.get("target_url") or label.get("url") or "")
         raw_parent_url = str(label.get("parent_url") or "")
@@ -344,19 +297,9 @@ def build_link_dataset(
         identity = stable_hash([parent_url, target_url, anchor])
         original_label = str(label["label"])
         content_hash = str(label.get("target_text_hash") or identity)
-        reviewed_label = human_labels.get(content_hash, original_label)
-        human_reviewed = bool(label.get("_human_review")) or content_hash in human_labels
-        final_label = (
-            reviewed_label
-            if human_reviewed
-            else "negative"
-            if group in force_negative_hosts
-            else original_label
-        )
+        final_label = "negative" if group in force_negative_hosts else original_label
         if final_label != original_label:
-            excluded[
-                "policy_relabels" if group in force_negative_hosts else "human_review_relabels"
-            ] += 1
+            excluded["policy_relabels"] += 1
         model_input = LinkVerdictInput(
             anchor=anchor,
             target_url=raw_target_url,
@@ -379,19 +322,12 @@ def build_link_dataset(
                 "label_correction": (
                     "force_negative_host"
                     if group in force_negative_hosts and final_label != original_label
-                    else "human_review"
-                    if reviewed_label != original_label
                     else ""
                 ),
                 "group": group,
                 "url": target_url,
                 "source": str(path.relative_to(root)),
-                "prompt_version": prompt_version,
-                "prompt_sha256": str(label.get("prompt_sha256") or ""),
-                "teacher": str(label.get("teacher") or ""),
-                "teacher_model": str(label.get("model") or ""),
-                "label_source": "human" if human_reviewed else "teacher",
-                "confidence": float(label.get("confidence") or 0.0),
+                "label_source": "human",
                 "stratum": str(label.get("selection") or label.get("sample_bucket") or ""),
                 "text": make_link_text(model_input),
                 "identity": identity,
@@ -511,7 +447,7 @@ def prepare(config_path: Path) -> Path:
         section = config.get(task)
         if not isinstance(section, dict):
             raise ValueError(f"Missing [{task}] section")
-        if task != "link" or section.get("use_teacher_labels", True):
+        if task == "page":
             inputs.extend(_source_paths(root, section, "label_files"))
         if section.get("human_review_files"):
             inputs.extend(_source_paths(root, section, "human_review_files"))
